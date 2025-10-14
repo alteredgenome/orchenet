@@ -1,6 +1,5 @@
-# **OrcheNet \- A Centralized Network Management Tool**
-
-![onette_full](https://github.com/alteredgenome/orchenet/blob/main/image.jpg?raw=true)
+![onette_full](https://github.com/alteredgenome/orchenet/blob/main/onette_full.jpg?raw=true)
+# **OrcheNet \- The Network Orchestrator**
 
 ## **📖 Overview**
 
