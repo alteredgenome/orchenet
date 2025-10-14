@@ -1,4 +1,4 @@
-![onette_full](https://github.com/alteredgenome/orchenet/blob/main/onette_full.jpg?raw=true)
+![onette_full](https://github.com/alteredgenome/orchenet/blob/main/onette_full.png?raw=true)
 # **OrcheNet \- The Network Orchestrator**
 
 ## **📖 Overview**
