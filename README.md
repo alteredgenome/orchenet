@@ -1,6 +1,6 @@
 # **OrcheNet \- A Centralized Network Management Tool**
 
-\!(https://www.google.com/search?q=https://placehold.co/1200x400/2d3748/edf2f7%3Ftext%3DOrcheNet%26font%3Dinter)
+![onette_full](https://github.com/alteredgenome/orchenet/blob/main/image.jpg?raw=true)
 
 ## **📖 Overview**
 
