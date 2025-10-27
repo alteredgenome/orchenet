@@ -11,3 +11,14 @@ passlib[bcrypt]==1.7.4
 alembic==1.13.3
 pytest==8.3.3
 pytest-asyncio==0.24.0
+
+# SSH and network connectivity
+paramiko==3.4.0
+asyncssh==2.14.2
+
+# Background tasks and scheduling
+celery==5.3.4
+redis==5.0.1
+
+# UniFi Controller integration
+aiohttp==3.9.1

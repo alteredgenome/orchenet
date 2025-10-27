@@ -5,6 +5,12 @@ Main entry point for the API server.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .database import engine, Base
+from .routers import devices, tasks, checkin
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="OrcheNet API",
     description="Network device orchestration and management platform",
@@ -19,6 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(devices.router)
+app.include_router(tasks.router)
+app.include_router(checkin.router)
 
 @app.get("/")
 async def root():

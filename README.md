@@ -53,7 +53,15 @@ The ultimate goal is to support the following vendors:
 ## **📚 Documentation**
 
 * **[CLAUDE.md](CLAUDE.md)** - Development guide for AI assistants and developers
-* **[CONFIG.md](CONFIG.md)** - Complete YAML configuration schema for MikroTik devices
+* **[CONFIG.md](CONFIG.md)** - **Unified vendor-agnostic YAML configuration schema** (recommended)
+
+### Vendor-Specific Configuration References
+* **[CONFIG-tik.md](CONFIG-tik.md)** - MikroTik RouterOS devices
+* **[CONFIG-ftnt.md](CONFIG-ftnt.md)** - Fortinet devices (FortiGate, FortiSwitch, FortiAP, FortiExtender)
+* **[CONFIG-ubnt.md](CONFIG-ubnt.md)** - Ubiquiti UniFi devices (UDM, USW, UAP)
+* **[CONFIG-wg.md](CONFIG-wg.md)** - WatchGuard devices (Firebox, AP, Switch)
+
+### Development Documentation
 * **[Backend README](backend/README.md)** - Backend setup and development
 * **[Frontend README](frontend/README.md)** - Frontend setup and development
 * **[Agent README](agent/README.md)** - Agent deployment and configuration

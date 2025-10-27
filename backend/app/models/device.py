@@ -55,3 +55,18 @@ class Device(Base):
     firmware_version = Column(String)
     serial_number = Column(String)
     metadata = Column(JSON)  # Flexible field for vendor-specific data
+
+    # Connection credentials (encrypted in production)
+    ssh_username = Column(String)
+    ssh_password = Column(String)  # Should be encrypted
+    ssh_key = Column(String)  # Path to SSH key or key content
+    ssh_port = Column(Integer, default=22)
+
+    # Vendor-specific connection info
+    api_url = Column(String)  # For UniFi controller, etc.
+    api_key = Column(String)  # API authentication
+    api_token = Column(String)  # Alternative auth token
+
+    # Check-in configuration
+    check_in_method = Column(String)  # "http", "ssh", "controller"
+    check_in_interval = Column(Integer, default=60)  # seconds

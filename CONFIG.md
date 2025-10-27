@@ -1,1265 +1,1635 @@
-# OrcheNet Configuration Schema
+# OrcheNet Unified Configuration Schema
 
-This document defines the complete YAML configuration schema for managing network devices through OrcheNet. The schema is vendor-agnostic at the top level, with vendor-specific implementations handling the translation to device commands.
+This document defines the vendor-agnostic YAML configuration schema for OrcheNet. This unified schema can be translated to any supported vendor (MikroTik, Fortinet, Ubiquiti, WatchGuard).
 
-## MikroTik RouterOS Configuration
+## Philosophy
 
-This section details all available configuration elements for MikroTik RouterOS devices.
+OrcheNet uses a **unified abstraction layer** that represents common networking concepts in a vendor-neutral way. When you write configuration in this schema, OrcheNet automatically translates it to the appropriate vendor-specific commands or API calls.
+
+### Design Principles
+
+1. **Vendor Agnostic**: Configuration describes *what* you want, not *how* to achieve it
+2. **Common Denominator**: Focus on features supported across all vendors
+3. **Extensible**: Vendor-specific features available through extensions
+4. **Intuitive**: Use industry-standard terminology
+5. **Declarative**: Describe desired state, not procedural steps
 
 ---
 
 ## Table of Contents
 
+- [Device Identification](#device-identification)
 - [System Configuration](#system-configuration)
-- [Interfaces](#interfaces)
-- [IP Configuration](#ip-configuration)
-  - [IP Addresses](#ip-addresses)
-  - [IP Routes](#ip-routes)
-  - [DNS](#dns)
-  - [DHCP Server](#dhcp-server)
-  - [DHCP Client](#dhcp-client)
-  - [IP Pools](#ip-pools)
-  - [IP Services](#ip-services)
-- [Firewall](#firewall)
-  - [Filter Rules](#filter-rules)
-  - [NAT Rules](#nat-rules)
-  - [Mangle Rules](#mangle-rules)
-  - [Address Lists](#address-lists)
-- [Bridge](#bridge)
-- [VLAN](#vlan)
-- [Wireless](#wireless)
-- [Routing](#routing)
-  - [OSPF](#ospf)
-  - [BGP](#bgp)
-- [VPN](#vpn)
-  - [IPsec](#ipsec)
-  - [L2TP](#l2tp)
-  - [PPTP](#pptp)
-  - [OpenVPN](#openvpn)
-  - [WireGuard](#wireguard)
-- [Quality of Service (QoS)](#quality-of-service-qos)
-- [SNMP](#snmp)
+- [Network Interfaces](#network-interfaces)
+- [VLANs](#vlans)
+- [IP Addressing](#ip-addressing)
+- [DHCP Services](#dhcp-services)
+- [DNS Configuration](#dns-configuration)
+- [Static Routes](#static-routes)
+- [Dynamic Routing](#dynamic-routing)
+- [Firewall Rules](#firewall-rules)
+- [NAT Configuration](#nat-configuration)
+- [VPN Configuration](#vpn-configuration)
+- [Wireless Networks](#wireless-networks)
+- [Access Points](#access-points)
+- [Switch Configuration](#switch-configuration)
+- [Quality of Service](#quality-of-service)
+- [User Authentication](#user-authentication)
 - [Logging](#logging)
-- [Users and Access](#users-and-access)
-- [Backup and Scheduling](#backup-and-scheduling)
+- [High Availability](#high-availability)
+- [Vendor Extensions](#vendor-extensions)
+
+---
+
+## Device Identification
+
+Specify the device being configured.
+
+```yaml
+device:
+  # Device identification
+  name: "router-hq-01"
+  vendor: "mikrotik"  # mikrotik, fortinet, ubiquiti, watchguard
+  model: "CCR1009"
+
+  # Location
+  location: "Headquarters"
+  site: "main"
+
+  # Management
+  contact: "admin@example.com"
+```
 
 ---
 
 ## System Configuration
 
-General system settings including identity, time, and services.
+Global system settings applicable to all vendors.
 
 ```yaml
 system:
   # Device identity
-  identity: "Router-Main"
+  hostname: "Router-HQ-01"
+  description: "Headquarters main router"
 
-  # Time and NTP
-  clock:
-    timezone: "America/New_York"
-    time_zone_autodetect: true
+  # Time settings
+  timezone: "America/New_York"
 
   ntp:
     enabled: true
     servers:
-      - "time.google.com"
       - "pool.ntp.org"
-    vrf: "main"
+      - "time.google.com"
 
-  # Logging
-  note: "Production router - Site A"
+  # Management access
+  management:
+    # Web interface
+    web:
+      enabled: true
+      http_port: 80
+      https_port: 443
+      session_timeout: 30
 
-  # Router resource settings
-  resource:
-    cpu_affinity: true
+    # SSH
+    ssh:
+      enabled: true
+      port: 22
 
-  # Watchdog
-  watchdog:
+    # API (for automation)
+    api:
+      enabled: true
+      port: 8728
+      ssl_port: 8729
+
+  # SNMP
+  snmp:
     enabled: true
-    watchdog_timer: true
+    community: "public"
+    location: "Datacenter A"
+    contact: "admin@example.com"
+
+    trap_destinations:
+      - host: "192.168.1.100"
+        community: "public"
+        port: 162
+
+  # Users
+  users:
+    - username: "admin"
+      password: "secure-password"
+      role: "admin"
+
+    - username: "readonly"
+      password: "readonly-password"
+      role: "readonly"
 ```
 
 ---
 
-## Interfaces
+## Network Interfaces
 
-Interface configuration for physical and virtual interfaces.
+Physical and logical interface configuration.
 
 ```yaml
 interfaces:
-  # Physical interface configuration
-  - name: "ether1"
+  # Physical interface
+  - name: "wan1"
+    type: "physical"
     enabled: true
-    comment: "WAN interface"
-    mtu: 1500
-    mac_address: "auto"  # or specific MAC
+    description: "Primary WAN connection"
 
-  - name: "ether2"
+    # Addressing
+    addressing:
+      mode: "dhcp"  # static, dhcp, pppoe
+
+      # For static mode:
+      # mode: "static"
+      # ipv4: "203.0.113.10/30"
+      # gateway: "203.0.113.9"
+
+    # Link settings
+    speed: "auto"  # auto, 10, 100, 1000, 10000
+    duplex: "auto"  # auto, half, full
+    mtu: 1500
+
+    # Role/zone
+    zone: "wan"
+
+  - name: "lan1"
+    type: "physical"
     enabled: true
-    comment: "LAN interface"
-    mtu: 1500
+    description: "Main LAN interface"
 
-  # VLAN interfaces
+    addressing:
+      mode: "static"
+      ipv4: "192.168.1.1/24"
+
+    speed: "auto"
+    duplex: "auto"
+    mtu: 1500
+    zone: "lan"
+
+  # VLAN interface
   - name: "vlan10"
     type: "vlan"
-    vlan_id: 10
-    interface: "ether2"
     enabled: true
-    comment: "Management VLAN"
+    description: "Management VLAN"
 
-  # Bridge interfaces are defined in the bridge section
+    vlan:
+      id: 10
+      parent: "lan1"
 
-  # Bonding/Link aggregation
+    addressing:
+      mode: "static"
+      ipv4: "192.168.10.1/24"
+
+    zone: "lan"
+
+  # Bridge interface
+  - name: "bridge-lan"
+    type: "bridge"
+    enabled: true
+    description: "LAN bridge"
+
+    bridge:
+      members:
+        - "lan2"
+        - "lan3"
+        - "lan4"
+      stp: true
+
+    addressing:
+      mode: "static"
+      ipv4: "192.168.2.1/24"
+
+    zone: "lan"
+
+  # LAG/Bond interface
   - name: "bond1"
-    type: "bonding"
-    slaves:
-      - "ether3"
-      - "ether4"
-    mode: "802.3ad"  # balance-rr, active-backup, 802.3ad, etc.
+    type: "aggregate"
     enabled: true
-    comment: "Link aggregation to switch"
+    description: "Link aggregation to switch"
+
+    aggregate:
+      mode: "lacp"  # lacp, static
+      members:
+        - "lan5"
+        - "lan6"
+
+    addressing:
+      mode: "static"
+      ipv4: "192.168.100.1/24"
+
+    zone: "lan"
+
+  # Loopback
+  - name: "loopback0"
+    type: "loopback"
+    enabled: true
+
+    addressing:
+      mode: "static"
+      ipv4: "1.1.1.1/32"
 ```
 
 ---
 
-## IP Configuration
+## VLANs
 
-### IP Addresses
-
-IP address assignment to interfaces.
-
-```yaml
-ip:
-  addresses:
-    - interface: "ether1"
-      address: "203.0.113.5/30"
-      comment: "WAN IP"
-      network: "203.0.113.4"  # Optional, auto-calculated
-
-    - interface: "ether2"
-      address: "192.168.1.1/24"
-      comment: "LAN gateway"
-
-    - interface: "vlan10"
-      address: "10.0.10.1/24"
-      comment: "Management network"
-```
-
-### IP Routes
-
-Static and dynamic routing configuration.
-
-```yaml
-ip:
-  routes:
-    - dst_address: "0.0.0.0/0"
-      gateway: "203.0.113.6"
-      distance: 1
-      comment: "Default route to ISP"
-      check_gateway: "ping"
-      scope: 30
-      target_scope: 10
-
-    - dst_address: "10.0.0.0/8"
-      gateway: "192.168.1.254"
-      distance: 10
-      comment: "Route to internal network"
-
-    - dst_address: "172.16.0.0/16"
-      gateway: "192.168.1.253"
-      type: "blackhole"
-      comment: "Blackhole unused network"
-```
-
-### DNS
-
-DNS server configuration.
-
-```yaml
-ip:
-  dns:
-    servers:
-      - "1.1.1.1"
-      - "8.8.8.8"
-    allow_remote_requests: true
-    cache_size: 4096
-    max_udp_packet_size: 4096
-    query_server_timeout: 2000
-    query_total_timeout: 10000
-```
-
-### DHCP Server
-
-DHCP server pools and networks.
-
-```yaml
-ip:
-  dhcp_server:
-    - name: "dhcp-lan"
-      interface: "ether2"
-      address_pool: "pool-lan"
-      lease_time: "1d"
-      authoritative: true
-      bootp_support: "none"
-      disabled: false
-
-      # DHCP options
-      dns_server: "192.168.1.1"
-      ntp_server: "192.168.1.1"
-      domain: "local.lan"
-      wins_server: ""
-
-      # Lease settings
-      lease_script: ""
-
-    # DHCP network configuration
-    - name: "network-lan"
-      type: "network"
-      address: "192.168.1.0/24"
-      gateway: "192.168.1.1"
-      dns_server: "192.168.1.1"
-      domain: "local.lan"
-      netmask: 24
-      comment: "LAN DHCP network"
-```
-
-### DHCP Client
-
-DHCP client on WAN or other interfaces.
-
-```yaml
-ip:
-  dhcp_client:
-    - interface: "ether1"
-      disabled: false
-      use_peer_dns: true
-      use_peer_ntp: true
-      add_default_route: true
-      default_route_distance: 1
-      comment: "WAN DHCP client"
-```
-
-### IP Pools
-
-Address pools for DHCP and VPN.
-
-```yaml
-ip:
-  pools:
-    - name: "pool-lan"
-      ranges:
-        - "192.168.1.100-192.168.1.250"
-      comment: "LAN DHCP pool"
-
-    - name: "pool-vpn"
-      ranges:
-        - "10.10.10.10-10.10.10.100"
-      comment: "VPN client pool"
-```
-
-### IP Services
-
-Control access to router services.
-
-```yaml
-ip:
-  services:
-    - name: "telnet"
-      disabled: true
-
-    - name: "ftp"
-      disabled: true
-
-    - name: "www"
-      disabled: false
-      port: 80
-      address: "192.168.1.0/24"  # Restrict to LAN
-
-    - name: "ssh"
-      disabled: false
-      port: 22
-      address: "192.168.1.0/24"
-
-    - name: "www-ssl"
-      disabled: false
-      port: 443
-      address: "192.168.1.0/24"
-      certificate: "router-cert"
-
-    - name: "api"
-      disabled: false
-      port: 8728
-      address: "192.168.1.0/24"
-
-    - name: "api-ssl"
-      disabled: false
-      port: 8729
-      address: "192.168.1.0/24"
-      certificate: "router-cert"
-```
-
----
-
-## Firewall
-
-Comprehensive firewall configuration including filter, NAT, and mangle rules.
-
-### Filter Rules
-
-Packet filtering rules.
-
-```yaml
-ip:
-  firewall:
-    filter:
-      # Input chain - traffic to router
-      - chain: "input"
-        action: "accept"
-        connection_state: "established,related"
-        comment: "Accept established/related"
-
-      - chain: "input"
-        action: "drop"
-        connection_state: "invalid"
-        comment: "Drop invalid"
-
-      - chain: "input"
-        action: "accept"
-        protocol: "icmp"
-        comment: "Accept ICMP"
-
-      - chain: "input"
-        action: "accept"
-        in_interface: "ether2"
-        comment: "Accept from LAN"
-
-      - chain: "input"
-        action: "drop"
-        comment: "Drop all other input"
-
-      # Forward chain - traffic through router
-      - chain: "forward"
-        action: "accept"
-        connection_state: "established,related"
-        comment: "Accept established/related"
-
-      - chain: "forward"
-        action: "drop"
-        connection_state: "invalid"
-        comment: "Drop invalid"
-
-      - chain: "forward"
-        action: "accept"
-        in_interface: "ether2"
-        comment: "Accept from LAN to WAN"
-
-      - chain: "forward"
-        action: "drop"
-        comment: "Drop all other forward"
-
-      # Custom rules
-      - chain: "forward"
-        action: "accept"
-        protocol: "tcp"
-        dst_port: "80,443"
-        in_interface: "ether2"
-        comment: "Allow HTTP/HTTPS from LAN"
-
-      - chain: "forward"
-        action: "drop"
-        protocol: "tcp"
-        dst_port: "22"
-        src_address: "!192.168.1.0/24"
-        comment: "Block SSH except from LAN"
-
-      # Advanced matching
-      - chain: "forward"
-        action: "drop"
-        protocol: "tcp"
-        tcp_flags: "syn,!ack"
-        connection_limit: "10,32"
-        comment: "SYN flood protection"
-
-      - chain: "input"
-        action: "add-src-to-address-list"
-        protocol: "tcp"
-        dst_port: "22"
-        connection_state: "new"
-        src_address_list: "!ssh_allowed"
-        address_list: "ssh_blacklist"
-        address_list_timeout: "1d"
-        comment: "Blacklist unauthorized SSH attempts"
-```
-
-### NAT Rules
-
-Network Address Translation rules.
-
-```yaml
-ip:
-  firewall:
-    nat:
-      # Source NAT (masquerade)
-      - chain: "srcnat"
-        action: "masquerade"
-        out_interface: "ether1"
-        comment: "Masquerade WAN"
-
-      # Destination NAT (port forwarding)
-      - chain: "dstnat"
-        action: "dst-nat"
-        protocol: "tcp"
-        dst_port: "8080"
-        in_interface: "ether1"
-        to_addresses: "192.168.1.100"
-        to_ports: "80"
-        comment: "Forward port 8080 to internal web server"
-
-      - chain: "dstnat"
-        action: "dst-nat"
-        protocol: "tcp"
-        dst_port: "2222"
-        in_interface: "ether1"
-        to_addresses: "192.168.1.10"
-        to_ports: "22"
-        comment: "SSH to internal server"
-
-      # Redirect
-      - chain: "dstnat"
-        action: "redirect"
-        protocol: "tcp"
-        dst_port: "80"
-        in_interface: "ether2"
-        to_ports: "8080"
-        comment: "Redirect HTTP to proxy"
-```
-
-### Mangle Rules
-
-Packet marking and modification.
-
-```yaml
-ip:
-  firewall:
-    mangle:
-      - chain: "prerouting"
-        action: "mark-connection"
-        protocol: "tcp"
-        dst_port: "80,443"
-        new_connection_mark: "http_traffic"
-        passthrough: true
-        comment: "Mark HTTP/HTTPS connections"
-
-      - chain: "prerouting"
-        action: "mark-packet"
-        connection_mark: "http_traffic"
-        new_packet_mark: "http_packet"
-        passthrough: false
-        comment: "Mark HTTP/HTTPS packets"
-
-      - chain: "postrouting"
-        action: "change-mss"
-        protocol: "tcp"
-        tcp_flags: "syn"
-        new_mss: "1360"
-        out_interface: "ether1"
-        comment: "MSS clamping for VPN"
-```
-
-### Address Lists
-
-Reusable address lists for firewall rules.
-
-```yaml
-ip:
-  firewall:
-    address_lists:
-      - list: "management_ips"
-        address: "192.168.1.10"
-        comment: "Admin workstation"
-
-      - list: "management_ips"
-        address: "192.168.1.11"
-        comment: "Secondary admin"
-
-      - list: "blocked_countries"
-        address: "203.0.113.0/24"
-        timeout: "1d"
-        comment: "Temporary block"
-
-      - list: "vpn_clients"
-        address: "10.10.10.0/24"
-        comment: "VPN subnet"
-```
-
----
-
-## Bridge
-
-Bridge configuration for switching and VLANs.
-
-```yaml
-bridge:
-  bridges:
-    - name: "bridge-lan"
-      comment: "Main LAN bridge"
-      vlan_filtering: true
-      pvid: 1
-      frame_types: "admit-all"
-      ingress_filtering: false
-      protocol_mode: "rstp"  # stp, rstp, mstp
-
-  ports:
-    - bridge: "bridge-lan"
-      interface: "ether2"
-      pvid: 1
-      comment: "LAN port 1"
-
-    - bridge: "bridge-lan"
-      interface: "ether3"
-      pvid: 10
-      comment: "Management VLAN"
-
-    - bridge: "bridge-lan"
-      interface: "ether4"
-      pvid: 1
-      comment: "LAN port 2"
-
-  vlans:
-    - bridge: "bridge-lan"
-      vlan_ids: "1"
-      tagged:
-        - "ether2"
-      untagged:
-        - "ether3"
-      comment: "Default VLAN"
-
-    - bridge: "bridge-lan"
-      vlan_ids: "10"
-      tagged:
-        - "ether2"
-        - "ether3"
-      comment: "Management VLAN"
-
-    - bridge: "bridge-lan"
-      vlan_ids: "20,30,40"
-      tagged:
-        - "ether2"
-      comment: "Guest and IoT VLANs"
-```
-
----
-
-## VLAN
-
-VLAN interface configuration (also see Bridge VLAN section).
+VLAN definitions (can be defined inline with interfaces or separately).
 
 ```yaml
 vlans:
-  - name: "vlan-guest"
-    vlan_id: 20
-    interface: "bridge-lan"
-    comment: "Guest network VLAN"
+  - id: 1
+    name: "default"
+    description: "Default VLAN"
 
-  - name: "vlan-iot"
-    vlan_id: 30
-    interface: "bridge-lan"
-    comment: "IoT devices VLAN"
+  - id: 10
+    name: "management"
+    description: "Management network"
+
+  - id: 20
+    name: "guest"
+    description: "Guest WiFi"
+
+  - id: 30
+    name: "iot"
+    description: "IoT devices"
+
+  - id: 100
+    name: "servers"
+    description: "Server network"
 ```
 
 ---
 
-## Wireless
+## IP Addressing
 
-Wireless interface and security configuration.
+Additional IP address assignments.
 
 ```yaml
-wireless:
-  # Security profiles
-  security_profiles:
+ip:
+  # Additional addresses
+  addresses:
+    - interface: "lan1"
+      address: "192.168.1.254/24"
+      description: "Secondary address"
+
+    - interface: "vlan10"
+      address: "192.168.10.254/24"
+      description: "Backup gateway"
+
+  # Address pools (for DHCP, VPN, etc.)
+  pools:
+    - name: "lan-dhcp"
+      start: "192.168.1.100"
+      end: "192.168.1.200"
+
+    - name: "guest-dhcp"
+      start: "192.168.20.50"
+      end: "192.168.20.200"
+
+    - name: "vpn-pool"
+      start: "10.10.10.10"
+      end: "10.10.10.100"
+```
+
+---
+
+## DHCP Services
+
+DHCP server configuration.
+
+```yaml
+dhcp:
+  servers:
+    - name: "lan-dhcp"
+      interface: "lan1"
+      enabled: true
+
+      # IP range
+      pool: "lan-dhcp"  # Reference to pool above
+      # OR specify inline:
+      # start_ip: "192.168.1.100"
+      # end_ip: "192.168.1.200"
+
+      # Network settings
+      gateway: "192.168.1.1"
+      netmask: "255.255.255.0"
+
+      # DNS
+      dns_servers:
+        - "192.168.1.1"
+        - "1.1.1.1"
+
+      # Domain
+      domain_name: "local.lan"
+
+      # Lease time
+      lease_time: 86400  # seconds
+
+      # DHCP options
+      options:
+        - code: 66
+          value: "192.168.1.10"
+          description: "TFTP server"
+
+      # Static reservations
+      reservations:
+        - mac: "00:11:22:33:44:55"
+          ip: "192.168.1.50"
+          hostname: "server1"
+
+    - name: "guest-dhcp"
+      interface: "vlan20"
+      enabled: true
+      pool: "guest-dhcp"
+      gateway: "192.168.20.1"
+      netmask: "255.255.255.0"
+      dns_servers:
+        - "192.168.20.1"
+        - "1.1.1.1"
+      lease_time: 3600
+
+  # DHCP relay
+  relay:
+    - interface: "vlan100"
+      server: "192.168.1.100"
+```
+
+---
+
+## DNS Configuration
+
+DNS proxy and forwarding.
+
+```yaml
+dns:
+  # DNS proxy/forwarder
+  proxy:
+    enabled: true
+
+    # Upstream DNS servers
+    servers:
+      - "1.1.1.1"
+      - "8.8.8.8"
+
+    # Allow queries from these interfaces/zones
+    allow_from:
+      - "lan"
+      - "vlan10"
+
+  # Static DNS entries
+  static:
+    - hostname: "server1.local.lan"
+      ip: "192.168.1.100"
+
+    - hostname: "server2.local.lan"
+      ip: "192.168.1.101"
+
+  # DNS filtering (if supported)
+  filtering:
+    enabled: true
+    block_malware: true
+    block_ads: false
+```
+
+---
+
+## Static Routes
+
+Static routing configuration.
+
+```yaml
+routes:
+  static:
     - name: "default"
-      mode: "none"
+      destination: "0.0.0.0/0"
+      gateway: "203.0.113.9"
+      interface: "wan1"
+      distance: 1
+      description: "Default route to ISP"
 
-    - name: "wpa2-enterprise"
-      mode: "dynamic-keys"
-      authentication_types:
-        - "wpa2-eap"
-      eap_methods: "eap-tls"
-      tls_mode: "verify-certificate"
-      tls_certificate: "server-cert"
+    - name: "internal-network"
+      destination: "10.0.0.0/8"
+      gateway: "192.168.1.254"
+      interface: "lan1"
+      distance: 10
+      description: "Route to internal network"
 
-    - name: "wpa2-personal"
-      mode: "dynamic-keys"
-      authentication_types:
-        - "wpa2-psk"
-      wpa2_pre_shared_key: "your-wifi-password"
-      group_ciphers: "aes-ccm"
-      unicast_ciphers: "aes-ccm"
-
-    - name: "wpa3-personal"
-      mode: "dynamic-keys"
-      authentication_types:
-        - "wpa3-psk"
-      wpa2_pre_shared_key: "your-wifi-password"
-      group_ciphers: "aes-ccm"
-      unicast_ciphers: "aes-ccm"
-
-  # Wireless interfaces
-  interfaces:
-    - name: "wlan1"
-      mode: "ap-bridge"  # ap-bridge, station, bridge, etc.
-      ssid: "MyNetwork"
-      band: "2ghz-b/g/n"
-      channel_width: "20/40mhz-Ce"
-      frequency: "auto"  # or specific frequency
-      wireless_protocol: "802.11"
-      security_profile: "wpa2-personal"
-      enabled: true
-      comment: "Main wireless network"
-
-      # Advanced settings
-      hide_ssid: false
-      wps_mode: "disabled"
-      bridge_mode: "enabled"
-      default_forwarding: true
-
-      # Radio settings
-      tx_power: 20  # dBm
-      tx_power_mode: "default"
-      distance: "indoors"
-
-      # Access list
-      access_list:
-        - mac_address: "AA:BB:CC:DD:EE:FF"
-          action: "accept"
-          comment: "Trusted device"
-        - mac_address: "11:22:33:44:55:66"
-          action: "reject"
-          comment: "Blocked device"
-
-    - name: "wlan2"
-      mode: "ap-bridge"
-      ssid: "GuestNetwork"
-      band: "5ghz-a/n/ac"
-      channel_width: "20/40/80mhz-Ceee"
-      frequency: "auto"
-      security_profile: "wpa2-personal"
-      enabled: true
-      comment: "Guest network - isolated"
-
-  # Wireless provisioning
-  provisioning:
-    enabled: false
-
-  # Channel scanning
-  channels:
-    save_selected: true
+    - name: "blackhole"
+      destination: "192.168.100.0/24"
+      type: "blackhole"
+      distance: 254
+      description: "Drop traffic to unused network"
 ```
 
 ---
 
-## Routing
+## Dynamic Routing
 
-Dynamic routing protocol configuration.
-
-### OSPF
+OSPF and BGP configuration.
 
 ```yaml
-routing:
+routes:
+  # OSPF
   ospf:
-    instances:
-      - name: "default"
-        router_id: "192.168.1.1"
-        redistribute:
-          - "connected"
-          - "static"
+    enabled: true
+    router_id: "1.1.1.1"
 
     areas:
-      - instance: "default"
-        name: "backbone"
-        area_id: "0.0.0.0"
-        type: "default"
+      - id: "0.0.0.0"
+        type: "standard"
+        authentication: "none"  # none, simple, md5
 
-    networks:
-      - area: "backbone"
-        network: "192.168.1.0/24"
+        networks:
+          - "192.168.1.0/24"
+          - "192.168.10.0/24"
 
     interfaces:
-      - instance: "default"
-        interface: "ether2"
+      - name: "lan1"
+        area: "0.0.0.0"
         cost: 10
         priority: 1
         hello_interval: 10
         dead_interval: 40
-        authentication: "md5"
-        authentication_key: "ospf-key-123"
-```
 
-### BGP
+    redistribute:
+      - protocol: "static"
+        metric: 100
+      - protocol: "connected"
+        metric: 50
 
-```yaml
-routing:
+  # BGP
   bgp:
-    instance:
-      name: "default"
-      as: 65001
-      router_id: "192.168.1.1"
+    enabled: false
+    asn: 65001
+    router_id: "1.1.1.1"
 
-    peers:
-      - name: "isp-peer"
-        remote_address: "203.0.113.6"
-        remote_as: 65000
-        multihop: false
-        route_reflect: false
-        hold_time: "3m"
-        ttl: 255
-        in_filter: "bgp-in"
-        out_filter: "bgp-out"
-        comment: "ISP BGP peer"
+    neighbors:
+      - ip: "203.0.113.9"
+        remote_asn: 65000
+        description: "ISP peer"
 
     networks:
-      - network: "192.168.0.0/16"
-        synchronize: false
-        comment: "Advertise internal networks"
+      - "192.168.0.0/16"
 ```
 
 ---
 
-## VPN
+## Firewall Rules
 
-VPN configuration for various protocols.
-
-### IPsec
+Unified firewall policy configuration.
 
 ```yaml
-vpn:
-  ipsec:
-    # Proposals
-    proposals:
-      - name: "default"
-        auth_algorithms: "sha256"
-        enc_algorithms: "aes-256-cbc"
-        lifetime: "30m"
-        pfs_group: "modp2048"
+firewall:
+  # Network/host aliases for reuse
+  aliases:
+    hosts:
+      - name: "server1"
+        ip: "192.168.1.100"
 
-    # Peers
-    peers:
-      - name: "remote-office"
-        address: "203.0.113.100/32"
-        port: 500
-        local_address: "203.0.113.5"
-        auth_method: "pre-shared-key"
-        secret: "your-preshared-key"
-        exchange_mode: "ike2"
-        passive: false
-        send_initial_contact: true
-        comment: "Site-to-site VPN"
+      - name: "server2"
+        ip: "192.168.1.101"
 
-    # Policies
-    policies:
-      - src_address: "192.168.1.0/24"
-        dst_address: "192.168.2.0/24"
-        protocol: "all"
-        action: "encrypt"
-        sa_src_address: "203.0.113.5"
-        sa_dst_address: "203.0.113.100"
-        proposal: "default"
-        tunnel: true
-        comment: "Policy for remote office"
-```
+    networks:
+      - name: "lan-subnet"
+        network: "192.168.1.0/24"
 
-### L2TP
+      - name: "guest-subnet"
+        network: "192.168.20.0/24"
 
-```yaml
-vpn:
-  l2tp:
-    server:
+    groups:
+      - name: "internal-servers"
+        members:
+          - "server1"
+          - "server2"
+
+  # Firewall rules
+  rules:
+    # Allow LAN to Internet
+    - name: "lan-to-internet"
       enabled: true
-      use_ipsec: true
-      ipsec_secret: "l2tp-secret"
-      default_profile: "default-encryption"
-      authentication: "mschap2"
-      keepalive_timeout: 30
-      max_sessions: 10
+      order: 100
 
-    secrets:
-      - name: "user1"
-        password: "password1"
-        local_address: "10.10.10.1"
-        remote_address: "10.10.10.10"
-        profile: "default-encryption"
-        service: "l2tp"
-```
+      source:
+        zones: ["lan"]
+        addresses: ["lan-subnet"]
 
-### PPTP
+      destination:
+        zones: ["wan"]
+        addresses: ["any"]
 
-```yaml
-vpn:
-  pptp:
-    server:
-      enabled: true
-      authentication: "mschap2"
-      default_profile: "default-encryption"
-      keepalive_timeout: 30
-      max_sessions: 10
+      service:
+        protocols: ["tcp", "udp"]
+        ports: ["80", "443", "53"]
 
-    secrets:
-      - name: "pptp-user1"
-        password: "password1"
-        local_address: "10.10.10.1"
-        remote_address: "10.10.10.11"
-        service: "pptp"
-```
+      action: "accept"
 
-### OpenVPN
-
-```yaml
-vpn:
-  ovpn:
-    server:
-      - name: "ovpn-server"
-        port: 1194
-        mode: "ip"
-        protocol: "tcp"
+      # NAT
+      nat:
         enabled: true
-        cipher: "aes256"
-        auth: "sha256"
-        certificate: "server-cert"
-        require_client_certificate: true
-        netmask: 24
+        type: "masquerade"
 
-    client:
-      - name: "remote-site"
-        connect_to: "vpn.example.com"
-        port: 1194
-        mode: "ip"
-        protocol: "tcp"
-        cipher: "aes256"
-        auth: "sha256"
-        certificate: "client-cert"
-        add_default_route: false
-        comment: "VPN to headquarters"
+      # Logging
+      log: true
+
+      # Security services (if supported)
+      security:
+        antivirus: true
+        ips: true
+        web_filter: true
+
+    # Block guest to LAN
+    - name: "block-guest-to-lan"
+      enabled: true
+      order: 200
+
+      source:
+        zones: ["guest"]
+        addresses: ["guest-subnet"]
+
+      destination:
+        zones: ["lan"]
+        addresses: ["lan-subnet"]
+
+      service:
+        protocols: ["any"]
+
+      action: "drop"
+      log: true
+
+    # Allow established/related
+    - name: "allow-established"
+      enabled: true
+      order: 10
+
+      source:
+        zones: ["any"]
+
+      destination:
+        zones: ["any"]
+
+      state: ["established", "related"]
+
+      action: "accept"
+      log: false
+
+    # Drop invalid
+    - name: "drop-invalid"
+      enabled: true
+      order: 20
+
+      source:
+        zones: ["any"]
+
+      destination:
+        zones: ["any"]
+
+      state: ["invalid"]
+
+      action: "drop"
+      log: true
+
+    # Custom application rule
+    - name: "allow-ssh-from-mgmt"
+      enabled: true
+      order: 150
+
+      source:
+        zones: ["lan"]
+        addresses: ["192.168.10.0/24"]
+
+      destination:
+        zones: ["lan"]
+        addresses: ["internal-servers"]
+
+      service:
+        protocols: ["tcp"]
+        ports: ["22"]
+
+      action: "accept"
+      log: true
 ```
 
-### WireGuard
+---
+
+## NAT Configuration
+
+Network Address Translation.
+
+```yaml
+nat:
+  # Source NAT (outbound)
+  source:
+    - name: "lan-internet"
+      enabled: true
+
+      source:
+        zones: ["lan"]
+        addresses: ["192.168.1.0/24"]
+
+      destination:
+        zones: ["wan"]
+
+      translation:
+        type: "masquerade"  # masquerade, static
+        # OR for static:
+        # type: "static"
+        # address: "203.0.113.10"
+
+  # Destination NAT (inbound/port forwarding)
+  destination:
+    - name: "web-server"
+      enabled: true
+
+      source:
+        zones: ["wan"]
+        addresses: ["any"]
+
+      destination:
+        zones: ["wan"]
+        addresses: ["203.0.113.10"]
+
+      service:
+        protocols: ["tcp"]
+        ports: ["443"]
+
+      translation:
+        address: "192.168.1.100"
+        port: 443
+
+    - name: "ssh-forward"
+      enabled: true
+
+      source:
+        zones: ["wan"]
+
+      destination:
+        zones: ["wan"]
+        addresses: ["203.0.113.10"]
+
+      service:
+        protocols: ["tcp"]
+        ports: ["2222"]
+
+      translation:
+        address: "192.168.1.50"
+        port: 22
+
+  # 1-to-1 NAT
+  static:
+    - name: "mail-server"
+      enabled: true
+      external_ip: "203.0.113.11"
+      internal_ip: "192.168.1.50"
+```
+
+---
+
+## VPN Configuration
+
+VPN tunnels and remote access.
 
 ```yaml
 vpn:
-  wireguard:
-    - name: "wg-server"
-      mtu: 1420
-      listen_port: 51820
-      private_key: "private-key-here"
-      comment: "WireGuard server interface"
+  # Site-to-Site VPN
+  site_to_site:
+    - name: "branch-office"
+      enabled: true
+      type: "ipsec"
 
-      peers:
-        - name: "client1"
-          public_key: "client-public-key"
-          allowed_address: "10.20.30.2/32"
-          endpoint_port: 51820
-          persistent_keepalive: 25
-          comment: "Mobile client"
+      # Local settings
+      local:
+        interface: "wan1"
+        id: "203.0.113.10"
+        subnets:
+          - "192.168.1.0/24"
+          - "192.168.10.0/24"
 
-        - name: "client2"
-          public_key: "client2-public-key"
-          allowed_address: "10.20.30.3/32"
-          persistent_keepalive: 25
-          comment: "Remote office"
+      # Remote settings
+      remote:
+        gateway: "198.51.100.10"
+        id: "198.51.100.10"
+        subnets:
+          - "192.168.2.0/24"
+          - "192.168.20.0/24"
+
+      # Authentication
+      authentication:
+        method: "psk"
+        preshared_key: "your-pre-shared-key"
+
+      # Phase 1 (IKE)
+      phase1:
+        mode: "ikev2"  # ikev1, ikev2
+        encryption: "aes256"
+        hash: "sha256"
+        dh_group: 14
+        lifetime: 28800
+
+      # Phase 2 (IPsec)
+      phase2:
+        encryption: "aes256"
+        hash: "sha256"
+        pfs_group: 14
+        lifetime: 3600
+
+      # Dead Peer Detection
+      dpd:
+        enabled: true
+        interval: 30
+        timeout: 120
+
+  # Remote Access VPN
+  remote_access:
+    - name: "ssl-vpn"
+      enabled: true
+      type: "ssl"  # ssl, ipsec, l2tp
+
+      # Server settings
+      listen_port: 443
+
+      # Client IP pool
+      client_pool: "vpn-pool"
+      # OR inline:
+      # client_range:
+      #   start: "10.10.10.10"
+      #   end: "10.10.10.100"
+
+      # Authentication
+      authentication:
+        method: "local"  # local, radius, ldap
+
+        users:
+          - username: "vpnuser1"
+            password: "user-password"
+          - username: "vpnuser2"
+            password: "user-password"
+
+      # Network access
+      allowed_networks:
+        - "192.168.1.0/24"
+        - "192.168.10.0/24"
+
+      # DNS for clients
+      dns_servers:
+        - "192.168.1.1"
+        - "1.1.1.1"
+
+      # Split tunnel
+      split_tunnel: true
 ```
 
 ---
 
-## Quality of Service (QoS)
+## Wireless Networks
 
-Traffic shaping and prioritization.
+WiFi/WLAN configuration (SSID definitions).
 
 ```yaml
-queue:
-  # Queue types
-  types:
-    - name: "default"
-      kind: "pfifo"
+wireless:
+  # Wireless networks (SSIDs)
+  networks:
+    - name: "corporate"
+      ssid: "CompanyWiFi"
+      enabled: true
 
-    - name: "priority-queue"
-      kind: "pcq"
-      pcq_rate: 0
-      pcq_classifier: "src-address,dst-address"
+      # Security
+      security:
+        mode: "wpa2-psk"  # open, wpa2-psk, wpa2-enterprise, wpa3-psk
+        passphrase: "SecurePassword123"
+        # For enterprise:
+        # mode: "wpa2-enterprise"
+        # radius_server: "192.168.1.100"
+        # radius_secret: "radius-secret"
 
-  # Simple queues
-  simple:
-    - name: "guest-limit"
-      target: "192.168.20.0/24"
-      max_limit: "10M/10M"  # upload/download
-      burst_limit: "15M/15M"
-      burst_threshold: "8M/8M"
-      burst_time: "8s/8s"
-      priority: 8
-      comment: "Limit guest network"
+      # Network assignment
+      vlan: 1
+      network: "lan1"
 
-    - name: "voip-priority"
-      target: "192.168.1.100/32"
-      dst: "0.0.0.0/0"
-      protocol: "udp"
-      dst_port: "5060-5061"
-      max_limit: "1M/1M"
-      priority: 1
-      comment: "Prioritize VoIP traffic"
+      # Broadcasting
+      broadcast_ssid: true
 
-  # Queue tree (more advanced)
-  tree:
-    - name: "download-parent"
-      parent: "ether2"
-      packet_mark: ""
-      limit_at: 0
-      max_limit: "100M"
-      priority: 8
+      # Band
+      bands: ["2.4ghz", "5ghz"]  # 2.4ghz, 5ghz, both
 
-    - name: "download-http"
-      parent: "download-parent"
-      packet_mark: "http_packet"
-      limit_at: "10M"
-      max_limit: "50M"
-      priority: 4
-      comment: "HTTP traffic"
+      # Fast roaming
+      fast_roaming: true
+
+      # Client limits
+      max_clients: 100
+
+    - name: "guest"
+      ssid: "Guest WiFi"
+      enabled: true
+
+      security:
+        mode: "wpa2-psk"
+        passphrase: "GuestPassword456"
+
+      # Guest settings
+      guest_network: true
+
+      # Captive portal
+      portal:
+        enabled: true
+        type: "click-through"  # click-through, password, voucher
+        session_timeout: 480  # minutes
+
+      # Isolation
+      client_isolation: true
+
+      vlan: 20
+      network: "vlan20"
+      broadcast_ssid: true
+      bands: ["2.4ghz", "5ghz"]
+
+    - name: "iot"
+      ssid: "IoT-Devices"
+      enabled: true
+
+      security:
+        mode: "wpa2-psk"
+        passphrase: "IoTPassword789"
+
+      vlan: 30
+      network: "vlan30"
+
+      # IoT-specific: 2.4GHz only
+      broadcast_ssid: false
+      bands: ["2.4ghz"]
+      max_clients: 100
 ```
 
 ---
 
-## SNMP
+## Access Points
 
-SNMP monitoring configuration.
+Physical AP configuration.
 
 ```yaml
-snmp:
+access_points:
+  - name: "ap-office-1"
+    mac: "00:00:00:00:00:01"
+    enabled: true
+
+    # Location
+    location: "Office - Floor 1"
+
+    # Networks (SSIDs) this AP broadcasts
+    networks:
+      - "corporate"
+      - "guest"
+
+    # Radio settings
+    radios:
+      # 2.4GHz radio
+      - band: "2.4ghz"
+        enabled: true
+        channel: "auto"  # auto, or specific channel
+        channel_width: 20  # 20, 40
+        power: "auto"  # auto, or dBm value
+
+      # 5GHz radio
+      - band: "5ghz"
+        enabled: true
+        channel: "auto"
+        channel_width: 80  # 20, 40, 80, 160
+        power: "auto"
+
+    # LED control
+    led_enabled: true
+
+  - name: "ap-office-2"
+    mac: "00:00:00:00:00:02"
+    enabled: true
+    location: "Office - Floor 2"
+    networks:
+      - "corporate"
+      - "guest"
+
+    radios:
+      - band: "2.4ghz"
+        enabled: true
+        channel: "auto"
+        channel_width: 20
+        power: "auto"
+      - band: "5ghz"
+        enabled: true
+        channel: "auto"
+        channel_width: 80
+        power: "auto"
+```
+
+---
+
+## Switch Configuration
+
+Switch and port configuration.
+
+```yaml
+switches:
+  - name: "switch-main"
+    mac: "00:00:00:00:00:03"
+    enabled: true
+
+    # Global switch settings
+    settings:
+      stp:
+        enabled: true
+        mode: "rstp"  # stp, rstp, mstp
+        priority: 32768
+
+      igmp_snooping: true
+      jumbo_frames: false
+
+    # Port configuration
+    ports:
+      # Uplink port
+      - port: 1
+        name: "uplink-to-router"
+        enabled: true
+
+        mode: "trunk"
+        native_vlan: 1
+        allowed_vlans: [1, 10, 20, 30]
+
+        speed: "auto"
+        duplex: "auto"
+
+        poe:
+          enabled: false
+
+      # Access ports
+      - port: 2
+        name: "workstation-1"
+        enabled: true
+
+        mode: "access"
+        vlan: 1
+
+        speed: "auto"
+        duplex: "auto"
+
+        poe:
+          enabled: false
+
+      # PoE port for AP
+      - port: 10
+        name: "ap-office-1"
+        enabled: true
+
+        mode: "access"
+        vlan: 1
+
+        speed: "auto"
+        duplex: "auto"
+
+        poe:
+          enabled: true
+          priority: "high"
+          max_power: 30  # watts
+
+      # Trunk port to another switch
+      - port: 24
+        name: "trunk-to-switch2"
+        enabled: true
+
+        mode: "trunk"
+        native_vlan: 1
+        allowed_vlans: [1, 10, 20, 30, 100]
+
+        speed: "1000"
+        duplex: "full"
+
+    # Link aggregation
+    lag:
+      - name: "lag1"
+        ports: [23, 24]
+        mode: "lacp"  # lacp, static
+```
+
+---
+
+## Quality of Service
+
+Traffic prioritization and shaping.
+
+```yaml
+qos:
   enabled: true
-  contact: "admin@example.com"
-  location: "Server Room A"
-  engine_id: ""
-  trap_version: 2
-  trap_community: "public"
-  trap_generators: "interfaces"
-  trap_target:
-    - "192.168.1.100"
 
-  communities:
-    - name: "public"
-      addresses: "192.168.1.0/24"
-      read_access: true
-      write_access: false
+  # Traffic classes
+  classes:
+    - name: "critical"
+      priority: 1
+      guaranteed_bandwidth: 20  # percent
+      max_bandwidth: 100
 
-    - name: "private"
-      addresses: "192.168.1.10/32"
-      read_access: true
-      write_access: true
+    - name: "high"
+      priority: 2
+      guaranteed_bandwidth: 30
+      max_bandwidth: 80
+
+    - name: "medium"
+      priority: 3
+      guaranteed_bandwidth: 20
+      max_bandwidth: 60
+
+    - name: "low"
+      priority: 4
+      guaranteed_bandwidth: 10
+      max_bandwidth: 40
+
+  # Classification rules
+  rules:
+    - name: "voip-critical"
+      enabled: true
+
+      match:
+        protocols: ["udp"]
+        ports: ["5060-5061"]
+
+      class: "critical"
+
+    - name: "video-conferencing"
+      enabled: true
+
+      match:
+        applications: ["zoom", "teams", "webex"]
+
+      class: "high"
+
+    - name: "bulk-transfer"
+      enabled: true
+
+      match:
+        applications: ["bittorrent", "ftp"]
+
+      class: "low"
+
+  # Bandwidth limits
+  limits:
+    - interface: "wan1"
+      upload: 50000  # kbps
+      download: 200000
+```
+
+---
+
+## User Authentication
+
+User database and authentication services.
+
+```yaml
+authentication:
+  # Local users
+  local_users:
+    - username: "admin"
+      password: "admin-password"
+      role: "admin"
+
+    - username: "user1"
+      password: "user-password"
+      role: "user"
+
+  # External authentication servers
+  servers:
+    # RADIUS
+    - name: "radius-primary"
+      type: "radius"
+      enabled: true
+
+      host: "192.168.1.100"
+      port: 1812
+      secret: "radius-secret"
+      timeout: 5
+
+    # LDAP / Active Directory
+    - name: "active-directory"
+      type: "ldap"
+      enabled: true
+
+      host: "192.168.1.50"
+      port: 389
+      use_ssl: false
+
+      base_dn: "dc=example,dc=com"
+      bind_dn: "cn=admin,dc=example,dc=com"
+      bind_password: "ldap-password"
+
+    # TACACS+
+    - name: "tacacs-server"
+      type: "tacacs"
+      enabled: false
+
+      host: "192.168.1.60"
+      port: 49
+      secret: "tacacs-secret"
 ```
 
 ---
 
 ## Logging
 
-System logging configuration.
+Logging and monitoring configuration.
 
 ```yaml
-system:
-  logging:
-    # Log actions
-    actions:
-      - name: "memory"
-        target: "memory"
-        memory_lines: 1000
+logging:
+  # Local logging
+  local:
+    enabled: true
+    level: "info"  # debug, info, warning, error, critical
 
-      - name: "disk"
-        target: "disk"
-        disk_file_name: "log"
-        disk_lines_per_file: 1000
-        disk_file_count: 2
+  # Remote syslog
+  syslog:
+    enabled: true
 
-      - name: "remote"
-        target: "remote"
-        remote: "192.168.1.100"
-        remote_port: 514
-        src_address: "192.168.1.1"
-        bsd_syslog: true
-        syslog_facility: "local7"
+    servers:
+      - host: "192.168.1.101"
+        port: 514
+        protocol: "tcp"  # tcp, udp
+        facility: "local0"
+        level: "info"
 
-    # Log topics
-    rules:
-      - topics:
-          - "info"
-          - "error"
-          - "warning"
-        action: "memory"
+  # Log types
+  log_types:
+    traffic: true
+    security: true
+    system: true
+    debug: false
 
-      - topics:
-          - "critical"
-        action: "remote"
-        prefix: "router"
+  # Alerts
+  alerts:
+    email:
+      enabled: true
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      use_tls: true
+      from: "router@example.com"
+      username: "router@example.com"
+      password: "email-password"
 
-      - topics:
-          - "firewall"
-        action: "disk"
+      recipients:
+        - "admin@example.com"
+
+      # Alert levels
+      levels: ["critical", "error", "warning"]
 ```
 
 ---
 
-## Users and Access
+## High Availability
 
-User accounts and permissions.
+Clustering and failover configuration.
 
 ```yaml
-users:
-  - name: "admin"
-    group: "full"
-    password: "secure-password"
-    comment: "Primary administrator"
+high_availability:
+  enabled: true
+  mode: "active-passive"  # active-passive, active-active
 
-  - name: "monitor"
-    group: "read"
-    password: "monitor-password"
-    comment: "Read-only monitoring account"
+  # Cluster settings
+  cluster:
+    id: 1
+    priority: 100  # Higher is preferred
+    password: "ha-cluster-password"
 
-  - name: "api-user"
-    group: "api"
-    password: "api-password"
-    comment: "API access account"
+  # Peer information
+  peer:
+    ip: "192.168.99.2"
 
-groups:
-  - name: "api"
-    policy:
-      - "read"
-      - "write"
-      - "api"
-    comment: "API access group"
+  # Heartbeat
+  heartbeat:
+    interval: 1000  # milliseconds
+    interfaces:
+      - "lan1"
+      - "dedicated-ha"
 
-# SSH keys for public key authentication
-user_ssh_keys:
-  - user: "admin"
-    key_data: "ssh-rsa AAAAB3NzaC1yc2EA... admin@workstation"
-    comment: "Admin SSH key"
+  # Virtual/shared IPs
+  virtual_ips:
+    - interface: "wan1"
+      ip: "203.0.113.12/30"
+
+    - interface: "lan1"
+      ip: "192.168.1.1/24"
+
+  # Monitoring
+  monitoring:
+    interfaces:
+      - "wan1"
+      - "lan1"
+
+    check_interval: 5
+    failure_threshold: 3
+
+  # Failover
+  failover:
+    auto_failback: false
+    failback_delay: 60  # seconds
+
+  # State synchronization
+  sync:
+    connections: true
+    dhcp_leases: true
+    configuration: true
 ```
 
 ---
 
-## Backup and Scheduling
+## Vendor Extensions
 
-Scheduled tasks and backups.
+Vendor-specific features not covered by the unified schema.
 
 ```yaml
-system:
-  scheduler:
-    - name: "daily-backup"
-      on_event: "/system backup save name=daily-backup"
-      start_date: "2024-01-01"
-      start_time: "03:00:00"
-      interval: "1d"
-      comment: "Daily configuration backup"
+# Vendor extensions allow access to vendor-specific features
+vendor_extensions:
+  # MikroTik specific
+  mikrotik:
+    # Hotspot
+    hotspot:
+      enabled: true
+      interface: "vlan20"
+      address_pool: "guest-dhcp"
 
-    - name: "weekly-email-backup"
-      on_event: "/system backup save name=weekly; /tool e-mail send to=admin@example.com subject=\"Router Backup\" body=\"Weekly backup attached\" file=weekly.backup"
-      start_date: "2024-01-01"
-      start_time: "04:00:00"
-      interval: "7d"
-      comment: "Weekly backup via email"
+  # Fortinet specific
+  fortinet:
+    # SD-WAN
+    sdwan:
+      enabled: true
+      members:
+        - interface: "wan1"
+          weight: 100
+        - interface: "wan2"
+          weight: 50
 
-    - name: "log-rotation"
-      on_event: "/log print file=logs"
-      start_time: "00:00:00"
-      interval: "1d"
-      comment: "Daily log export"
+      health_checks:
+        - name: "google-dns"
+          server: "8.8.8.8"
+          protocol: "ping"
 
-  # Email configuration for notifications
-  email:
-    server: "smtp.gmail.com"
-    port: 587
-    from: "router@example.com"
-    user: "router@example.com"
-    password: "email-password"
-    tls: true
+  # Ubiquiti specific
+  ubiquiti:
+    # DPI
+    dpi:
+      enabled: true
+
+    # Threat management
+    threat_management:
+      ips:
+        enabled: true
+        mode: "detection"
+
+  # WatchGuard specific
+  watchguard:
+    # APT Blocker
+    apt_blocker:
+      enabled: true
+      sensitivity: "medium"
+
+    # Reputation Enabled Defense
+    reputation:
+      enabled: true
+      threat_level: "moderate"
 ```
 
 ---
 
 ## Complete Example Configuration
 
-Here's a complete example configuration for a typical small office router:
+Here's a complete unified configuration example:
 
 ```yaml
-# Complete MikroTik Router Configuration Example
-# Small office with WAN, LAN, Guest WiFi, and VPN
+# Complete Unified Configuration Example
+# Small office router with VLANs, WiFi, and VPN
+
+device:
+  name: "router-office-01"
+  vendor: "mikrotik"  # Can be changed to any vendor
+  location: "Main Office"
 
 system:
-  identity: "Office-Router-Main"
-  clock:
-    timezone: "America/New_York"
+  hostname: "Office-Router"
+  timezone: "America/New_York"
+
   ntp:
     enabled: true
     servers:
       - "pool.ntp.org"
 
+  users:
+    - username: "admin"
+      password: "secure-password"
+      role: "admin"
+
 interfaces:
-  - name: "ether1"
+  - name: "wan1"
+    type: "physical"
     enabled: true
-    comment: "WAN"
-  - name: "ether2"
+    description: "Internet connection"
+    addressing:
+      mode: "dhcp"
+    zone: "wan"
+
+  - name: "lan1"
+    type: "physical"
     enabled: true
-    comment: "LAN"
-  - name: "ether3"
+    description: "Main LAN"
+    addressing:
+      mode: "static"
+      ipv4: "192.168.1.1/24"
+    zone: "lan"
+
+  - name: "vlan20"
+    type: "vlan"
     enabled: true
-    comment: "LAN"
-  - name: "ether4"
+    description: "Guest network"
+    vlan:
+      id: 20
+      parent: "lan1"
+    addressing:
+      mode: "static"
+      ipv4: "192.168.20.1/24"
+    zone: "guest"
+
+vlans:
+  - id: 1
+    name: "default"
+  - id: 20
+    name: "guest"
+
+dhcp:
+  servers:
+    - name: "lan-dhcp"
+      interface: "lan1"
+      enabled: true
+      start_ip: "192.168.1.100"
+      end_ip: "192.168.1.200"
+      gateway: "192.168.1.1"
+      dns_servers:
+        - "192.168.1.1"
+        - "1.1.1.1"
+      lease_time: 86400
+
+    - name: "guest-dhcp"
+      interface: "vlan20"
+      enabled: true
+      start_ip: "192.168.20.50"
+      end_ip: "192.168.20.200"
+      gateway: "192.168.20.1"
+      dns_servers:
+        - "192.168.20.1"
+      lease_time: 3600
+
+dns:
+  proxy:
     enabled: true
-    comment: "LAN"
-  - name: "wlan1"
-    enabled: true
-    comment: "WiFi"
-
-bridge:
-  bridges:
-    - name: "bridge-lan"
-      comment: "LAN bridge"
-      vlan_filtering: true
-
-  ports:
-    - bridge: "bridge-lan"
-      interface: "ether2"
-    - bridge: "bridge-lan"
-      interface: "ether3"
-    - bridge: "bridge-lan"
-      interface: "ether4"
-    - bridge: "bridge-lan"
-      interface: "wlan1"
-
-ip:
-  addresses:
-    - interface: "ether1"
-      address: "dhcp-client"
-    - interface: "bridge-lan"
-      address: "192.168.88.1/24"
-
-  pools:
-    - name: "dhcp-lan"
-      ranges:
-        - "192.168.88.100-192.168.88.200"
-
-  dhcp_server:
-    - name: "dhcp1"
-      interface: "bridge-lan"
-      address_pool: "dhcp-lan"
-      lease_time: "1d"
-      dns_server: "192.168.88.1"
-
-  dhcp_client:
-    - interface: "ether1"
-      disabled: false
-      use_peer_dns: true
-      add_default_route: true
-
-  dns:
     servers:
       - "1.1.1.1"
       - "8.8.8.8"
-    allow_remote_requests: true
 
-  firewall:
-    filter:
-      - chain: "input"
-        action: "accept"
-        connection_state: "established,related"
-      - chain: "input"
-        action: "drop"
-        connection_state: "invalid"
-      - chain: "input"
-        action: "accept"
-        protocol: "icmp"
-      - chain: "input"
-        action: "accept"
-        in_interface: "bridge-lan"
-      - chain: "input"
-        action: "drop"
+routes:
+  static:
+    - name: "default"
+      destination: "0.0.0.0/0"
+      gateway: "dhcp"
+      interface: "wan1"
 
-      - chain: "forward"
-        action: "accept"
-        connection_state: "established,related"
-      - chain: "forward"
-        action: "drop"
-        connection_state: "invalid"
-      - chain: "forward"
-        action: "accept"
-        in_interface: "bridge-lan"
-      - chain: "forward"
-        action: "drop"
+firewall:
+  aliases:
+    networks:
+      - name: "lan-subnet"
+        network: "192.168.1.0/24"
+      - name: "guest-subnet"
+        network: "192.168.20.0/24"
 
-    nat:
-      - chain: "srcnat"
-        action: "masquerade"
-        out_interface: "ether1"
+  rules:
+    - name: "allow-established"
+      enabled: true
+      order: 10
+      source:
+        zones: ["any"]
+      destination:
+        zones: ["any"]
+      state: ["established", "related"]
+      action: "accept"
+
+    - name: "lan-to-internet"
+      enabled: true
+      order: 100
+      source:
+        zones: ["lan"]
+        addresses: ["lan-subnet"]
+      destination:
+        zones: ["wan"]
+      service:
+        protocols: ["any"]
+      action: "accept"
+      nat:
+        enabled: true
+        type: "masquerade"
+
+    - name: "guest-to-internet"
+      enabled: true
+      order: 110
+      source:
+        zones: ["guest"]
+        addresses: ["guest-subnet"]
+      destination:
+        zones: ["wan"]
+      service:
+        protocols: ["any"]
+      action: "accept"
+      nat:
+        enabled: true
+        type: "masquerade"
+
+    - name: "block-guest-to-lan"
+      enabled: true
+      order: 200
+      source:
+        zones: ["guest"]
+      destination:
+        zones: ["lan"]
+      service:
+        protocols: ["any"]
+      action: "drop"
+      log: true
 
 wireless:
-  security_profiles:
+  networks:
     - name: "office-wifi"
-      mode: "dynamic-keys"
-      authentication_types:
-        - "wpa2-psk"
-      wpa2_pre_shared_key: "YourWiFiPassword123"
+      ssid: "OfficeWiFi"
+      enabled: true
+      security:
+        mode: "wpa2-psk"
+        passphrase: "SecurePassword123"
+      vlan: 1
+      network: "lan1"
+      broadcast_ssid: true
+      bands: ["2.4ghz", "5ghz"]
 
-  interfaces:
-    - name: "wlan1"
-      mode: "ap-bridge"
-      ssid: "Office-WiFi"
-      band: "2ghz-b/g/n"
-      security_profile: "office-wifi"
+    - name: "guest-wifi"
+      ssid: "Guest"
+      enabled: true
+      security:
+        mode: "wpa2-psk"
+        passphrase: "GuestPass456"
+      guest_network: true
+      portal:
+        enabled: true
+        type: "click-through"
+      client_isolation: true
+      vlan: 20
+      network: "vlan20"
+      bands: ["2.4ghz", "5ghz"]
 
-users:
-  - name: "admin"
-    group: "full"
-    password: "change-me"
-    comment: "Administrator"
+vpn:
+  remote_access:
+    - name: "ssl-vpn"
+      enabled: true
+      type: "ssl"
+      listen_port: 443
+      client_range:
+        start: "10.10.10.10"
+        end: "10.10.10.100"
+      authentication:
+        method: "local"
+        users:
+          - username: "vpnuser1"
+            password: "vpn-password"
+      allowed_networks:
+        - "192.168.1.0/24"
+      dns_servers:
+        - "192.168.1.1"
+      split_tunnel: true
 
-system:
-  scheduler:
-    - name: "daily-backup"
-      on_event: "/system backup save name=auto-backup"
-      start_time: "03:00:00"
-      interval: "1d"
+logging:
+  local:
+    enabled: true
+    level: "info"
+
+  syslog:
+    enabled: true
+    servers:
+      - host: "192.168.1.100"
+        port: 514
+        protocol: "udp"
 ```
 
 ---
 
-## Notes and Best Practices
+## Vendor Translation Matrix
 
-### Configuration Management
+This table shows how unified schema elements map to vendor-specific configurations:
 
-1. **Always use comments**: Every configuration element should have a descriptive comment
-2. **Version control**: Store YAML configurations in git for tracking changes
-3. **Test configurations**: Test on non-production devices before deploying
-4. **Backup first**: Always create a backup before applying new configurations
+| Unified Element | MikroTik | Fortinet | Ubiquiti | WatchGuard |
+|----------------|----------|----------|----------|------------|
+| `system.hostname` | `/system identity` | `config system global set hostname` | `system.name` | `device_name` |
+| `interfaces[].name` | `/interface` | `config system interface edit` | `networks[]` | `interfaces[]` |
+| `vlans[].id` | `/interface vlan` | `config system interface` | `networks[].vlan` | `vlans[]` |
+| `dhcp.servers[]` | `/ip dhcp-server` | `config system dhcp server` | `networks[].dhcpd_*` | `dhcp_servers[]` |
+| `firewall.rules[]` | `/ip firewall filter` | `config firewall policy` | `firewallrules[]` | `policies[]` |
+| `nat.source[]` | `/ip firewall nat` | `nat: enable` in policy | Built into firewall | `nat: true` in policy |
+| `vpn.site_to_site[]` | `/interface ipsec` | `config vpn ipsec` | `vpn.site_to_site` | `bovpn[]` |
+| `wireless.networks[]` | `/interface wireless` | `config wireless-controller vap` | `wlans[]` | `wireless_networks[]` |
+| `routes.static[]` | `/ip route` | `config router static` | `routes.static` | `routes.static` |
 
-### Security Best Practices
+---
 
-1. **Change default passwords**: Never use default or weak passwords
-2. **Restrict management access**: Limit SSH/WebFig access to management network
-3. **Use firewall rules**: Always implement input and forward chains
-4. **Keep firmware updated**: Regularly update RouterOS to latest stable version
-5. **Disable unused services**: Turn off services you don't need
-6. **Use strong WiFi encryption**: Prefer WPA3, minimum WPA2
-7. **Implement proper NAT**: Use masquerade for dynamic IPs
+## Best Practices for Unified Configuration
 
-### Performance Considerations
+### 1. Use Zones Consistently
 
-1. **Firewall rule order**: Place most-matched rules at the top
-2. **Connection tracking**: Use established/related rules early
-3. **Queue priorities**: Lower numbers = higher priority (1-8)
-4. **Bridge mode**: Enable hardware offload when possible
-5. **VLAN filtering**: Has performance impact, use only if needed
+Define clear security zones and use them consistently:
+- `wan` - Internet-facing interfaces
+- `lan` - Trusted internal network
+- `guest` - Guest/untrusted networks
+- `dmz` - DMZ servers
+- `vpn` - VPN clients
+
+### 2. Leverage Aliases
+
+Use aliases for IPs and networks that are referenced multiple times:
+
+```yaml
+firewall:
+  aliases:
+    networks:
+      - name: "trusted-networks"
+        network: "192.168.0.0/16"
+```
+
+### 3. Order Rules Properly
+
+Use `order` field to control rule evaluation:
+- 1-100: Allow established/related
+- 100-500: Allow rules
+- 500-1000: Deny rules
+- 1000+: Cleanup rules
+
+### 4. Be Explicit
+
+Specify all parameters even if they have defaults:
+
+```yaml
+interfaces:
+  - name: "wan1"
+    type: "physical"
+    enabled: true  # Explicit
+    description: "Primary WAN"  # Descriptive
+```
+
+### 5. Test Vendor Portability
+
+Test your configuration on multiple vendors to ensure portability:
+
+```bash
+# Test on MikroTik
+orchenet apply config.yaml --vendor mikrotik --dry-run
+
+# Test on Fortinet
+orchenet apply config.yaml --vendor fortinet --dry-run
+```
+
+---
+
+## Limitations and Vendor Differences
+
+### Feature Parity
+
+Not all vendors support all features equally:
+
+| Feature | MikroTik | Fortinet | Ubiquiti | WatchGuard |
+|---------|----------|----------|----------|------------|
+| Basic Routing | ✅ | ✅ | ✅ | ✅ |
+| OSPF | ✅ | ✅ | ❌ | ✅ |
+| BGP | ✅ | ✅ | ❌ | ✅ |
+| IPsec VPN | ✅ | ✅ | ✅ | ✅ |
+| SSL VPN | ❌ | ✅ | ❌ | ✅ |
+| IPS | ❌ | ✅ | ✅ | ✅ |
+| Application Control | Limited | ✅ | ✅ | ✅ |
+| SD-WAN | ❌ | ✅ | ✅ | ❌ |
+
+### Translation Behavior
+
+- **Best Effort**: OrcheNet translates configuration to the closest vendor equivalent
+- **Warnings**: Unsupported features generate warnings
+- **Errors**: Critical incompatibilities generate errors
+- **Extensions**: Use `vendor_extensions` for vendor-specific features
 
 ### Validation
 
-Before applying configurations:
-- Validate YAML syntax
-- Check for conflicting rules
-- Verify IP address ranges don't overlap
-- Ensure gateway addresses are correct
-- Confirm interface names match device
+OrcheNet validates configuration before applying:
+
+```yaml
+# This will fail on Ubiquiti (no OSPF support)
+routes:
+  ospf:
+    enabled: true
+```
+
+Error: `OSPF not supported on vendor 'ubiquiti'`
 
 ---
 
@@ -1267,4 +1637,4 @@ Before applying configurations:
 
 Schema Version: 1.0.0
 Last Updated: 2024-10-27
-Compatible with: MikroTik RouterOS 7.x
+Supported Vendors: MikroTik RouterOS 7.x, FortiOS 7.x, UniFi Network 8.x, Fireware OS 12.x
