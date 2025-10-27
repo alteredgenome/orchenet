@@ -34,13 +34,13 @@ orchenet/
 
 OrcheNet is currently in the initial development phase. The high-level implementation plan is as follows:
 
-1. **\[✔️\] Step 1: Initialize Project Structure**  
-2. **\[ \] Step 2: Backend \- Database Models & Vendor Abstraction**  
-3. **\[ \] Step 3: Backend \- Core API Endpoints**  
-4. **\[ \] Step 4: Agent \- Scaffolding & Server Check-in Logic**  
-5. **\[ \] Step 5: Initial Integration Testing**  
-6. **\[ \] Step 6: Backend \- YAML-to-Command Translation Logic**  
-7. **\[ \] Step 7: Frontend \- Scaffolding and Device Listing**  
+1. **\[✔️\] Step 1: Initialize Project Structure**
+2. **\[✔️\] Step 2: Backend \- Database Models & Vendor Abstraction**
+3. **\[ \] Step 3: Backend \- Core API Endpoints**
+4. **\[✔️\] Step 4: Agent \- Scaffolding & Server Check-in Logic**
+5. **\[ \] Step 5: Initial Integration Testing**
+6. **\[✔️\] Step 6: Backend \- YAML-to-Command Translation Logic**
+7. **\[✔️\] Step 7: Frontend \- Scaffolding and Device Listing**
 8. **\[ \] Step 8: Implement Full End-to-End Configuration Feature**
 
 The ultimate goal is to support the following vendors:
@@ -50,6 +50,58 @@ The ultimate goal is to support the following vendors:
 * WatchGuard (Firebox, APs)  
 * Ubiquiti (UDM, UAP, USW)
 
+## **📚 Documentation**
+
+* **[CLAUDE.md](CLAUDE.md)** - Development guide for AI assistants and developers
+* **[CONFIG.md](CONFIG.md)** - Complete YAML configuration schema for MikroTik devices
+* **[Backend README](backend/README.md)** - Backend setup and development
+* **[Frontend README](frontend/README.md)** - Frontend setup and development
+* **[Agent README](agent/README.md)** - Agent deployment and configuration
+
+## **🚦 Getting Started**
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your configuration
+uvicorn app.main:app --reload
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# Edit .env with your configuration
+npm run dev
+```
+
+### Agent Deployment
+
+```bash
+cd agent
+pip install -r requirements.txt
+cp agent.yaml.example agent.yaml
+# Edit agent.yaml with device configuration
+python agent.py --config agent.yaml
+```
+
 ## **🤝 Contributing**
 
-*(Details on how to contribute will be added once the initial project structure is more mature.)*
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+See [CLAUDE.md](CLAUDE.md) for detailed architecture and development guidelines.
