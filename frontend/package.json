@@ -16,8 +16,7 @@
     "axios": "^1.7.7",
     "js-yaml": "^4.1.0",
     "lucide-react": "^0.454.0",
-    "recharts": "^2.12.7",
-    "react-split-pane": "^0.1.92"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",

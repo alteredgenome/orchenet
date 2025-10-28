@@ -30,75 +30,160 @@ orchenet/
 ├── frontend/      \# Svelte/React SPA for the user interface.  
 └── agent/         \# Python agent script to be deployed on managed devices.
 
-## **🚀 Project Roadmap**
+## **🚀 Project Status**
 
-OrcheNet is currently in the initial development phase. The high-level implementation plan is as follows:
+### ✅ Completed Features
 
-1. **\[✔️\] Step 1: Initialize Project Structure**
-2. **\[✔️\] Step 2: Backend \- Database Models & Vendor Abstraction**
-3. **\[ \] Step 3: Backend \- Core API Endpoints**
-4. **\[✔️\] Step 4: Agent \- Scaffolding & Server Check-in Logic**
-5. **\[ \] Step 5: Initial Integration Testing**
-6. **\[✔️\] Step 6: Backend \- YAML-to-Command Translation Logic**
-7. **\[✔️\] Step 7: Frontend \- Scaffolding and Device Listing**
-8. **\[ \] Step 8: Implement Full End-to-End Configuration Feature**
+- **✅ Backend Infrastructure**
+  - FastAPI application with async task processor
+  - SQLAlchemy database models
+  - REST API endpoints (devices, tasks, check-in)
+  - SSH connection manager
+  - Configuration executor service
 
-The ultimate goal is to support the following vendors:
+- **✅ Multi-Vendor Support**
+  - MikroTik RouterOS translator
+  - Fortinet FortiOS translator
+  - Ubiquiti UniFi translator (Controller API)
+  - WatchGuard Fireware translator
 
-* MikroTik (RouterOS) \- *Initial Target*  
-* Fortinet (FortiGate, FortiSwitch, FortiAP)  
-* WatchGuard (Firebox, APs)  
-* Ubiquiti (UDM, UAP, USW)
+- **✅ Device Integration**
+  - HTTP check-in system (FortiGate, MikroTik)
+  - UniFi Controller API integration
+  - SSH-based management (all vendors)
+  - Device-side scripts and documentation
+
+- **✅ Web UI**
+  - FortiManager-inspired interface
+  - Device management views
+  - Configuration editor (YAML)
+  - Task monitoring
+  - Real-time status display
+
+- **✅ Configuration Management**
+  - Vendor-agnostic YAML schema
+  - Automatic translation to vendor commands
+  - Configuration versioning
+  - Task queue system
+
+- **✅ Documentation**
+  - Quick Start Guide
+  - Testing Guide
+  - Vendor-specific setup guides
+  - API documentation
+  - Configuration schemas
+
+### 🚧 In Progress
+
+- Authentication and authorization
+- Credential encryption
+- Advanced error handling
+- Comprehensive testing suite
+
+### 📋 Planned
+
+- Configuration rollback
+- Bulk operations
+- Advanced reporting
+- Multi-site management
+- Mobile app
+
+### Supported Vendors
+
+| Vendor | Status | Check-In Method | Configuration |
+|--------|--------|-----------------|---------------|
+| **MikroTik** | ✅ Ready | Script (HTTP) | SSH |
+| **Fortinet** | ✅ Ready | Automation Stitch (HTTP) | SSH |
+| **Ubiquiti** | ✅ Ready | Controller API | Controller API |
+| **WatchGuard** | ✅ Ready | SSH Poll | SSH |
 
 ## **📚 Documentation**
 
-* **[CLAUDE.md](CLAUDE.md)** - Development guide for AI assistants and developers
-* **[CONFIG.md](CONFIG.md)** - **Unified vendor-agnostic YAML configuration schema** (recommended)
+### 🚀 Getting Started
+* **[QUICKSTART.md](QUICKSTART.md)** - **Start here! Quick setup guide**
+* **[TESTING.md](TESTING.md)** - Complete testing guide without real devices
+* **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions for common issues
+* **[COMMANDS.md](COMMANDS.md)** - Quick command reference
 
-### Vendor-Specific Configuration References
-* **[CONFIG-tik.md](CONFIG-tik.md)** - MikroTik RouterOS devices
-* **[CONFIG-ftnt.md](CONFIG-ftnt.md)** - Fortinet devices (FortiGate, FortiSwitch, FortiAP, FortiExtender)
-* **[CONFIG-ubnt.md](CONFIG-ubnt.md)** - Ubiquiti UniFi devices (UDM, USW, UAP)
-* **[CONFIG-wg.md](CONFIG-wg.md)** - WatchGuard devices (Firebox, AP, Switch)
+### 📖 Configuration
+* **[CONFIG.md](CONFIG.md)** - **Unified vendor-agnostic YAML schema** (recommended)
+* **[CONFIG-tik.md](CONFIG-tik.md)** - MikroTik RouterOS specific
+* **[CONFIG-ftnt.md](CONFIG-ftnt.md)** - Fortinet specific
+* **[CONFIG-ubnt.md](CONFIG-ubnt.md)** - Ubiquiti UniFi specific
+* **[CONFIG-wg.md](CONFIG-wg.md)** - WatchGuard specific
 
-### Development Documentation
-* **[Backend README](backend/README.md)** - Backend setup and development
-* **[Frontend README](frontend/README.md)** - Frontend setup and development
-* **[Agent README](agent/README.md)** - Agent deployment and configuration
+### 🛠️ Component Documentation
+* **[backend/README.md](backend/README.md)** - Backend setup and API
+* **[backend/README-DETAILED.md](backend/README-DETAILED.md)** - Detailed backend guide
+* **[frontend/WEBUI-README.md](frontend/WEBUI-README.md)** - Frontend UI guide
+
+### 📡 Device Setup
+* **[device-scripts/mikrotik/README.md](device-scripts/mikrotik/README.md)** - MikroTik setup
+* **[device-scripts/fortigate/README.md](device-scripts/fortigate/README.md)** - FortiGate setup
+* **[device-scripts/watchguard/README.md](device-scripts/watchguard/README.md)** - WatchGuard setup
+
+### 🔧 Development
+* **[CLAUDE.md](CLAUDE.md)** - AI assistant and developer guide
+* **[IMPLEMENTATION-SUMMARY.md](IMPLEMENTATION-SUMMARY.md)** - Complete implementation details
 
 ## **🚦 Getting Started**
 
-### Backend Setup
+### Quick Start (Recommended)
 
+**Linux/Mac:**
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+**Windows:**
+```batch
+start.bat
+```
+
+The startup script will automatically:
+- Install all dependencies
+- Initialize the database
+- Start backend (http://localhost:8000)
+- Start frontend (http://localhost:5173)
+
+**📖 For detailed instructions, see [QUICKSTART.md](QUICKSTART.md)**
+
+### Manual Setup
+
+**Backend:**
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your configuration
-uvicorn app.main:app --reload
+python init_db.py --seed
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Frontend Setup
-
+**Frontend:**
 ```bash
 cd frontend
 npm install
 cp .env.example .env
-# Edit .env with your configuration
 npm run dev
 ```
 
-### Agent Deployment
+### Access the Application
 
+- **Frontend UI**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+### Stop Services
+
+**Linux/Mac:**
 ```bash
-cd agent
-pip install -r requirements.txt
-cp agent.yaml.example agent.yaml
-# Edit agent.yaml with device configuration
-python agent.py --config agent.yaml
+./stop.sh
 ```
+
+**Windows:** Close the terminal windows
 
 ## **🤝 Contributing**
 

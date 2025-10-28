@@ -140,3 +140,166 @@ Each vendor module should implement:
 - Status collector (device → normalized format)
 - Command executor (with error handling)
 - Capability discovery (what features are supported)
+
+## Vendor-Specific Check-In Methods
+
+OrcheNet uses different check-in methods optimized for each vendor's capabilities:
+
+### FortiGate (Fortinet)
+**Method:** Automation Stitch + SSH
+- **Check-In:** FortiGate automation stitch makes periodic HTTP POST to `/api/checkin`
+- **Configuration Push:** OrcheNet connects via SSH to apply configurations
+- **Advantages:** Native FortiOS feature, no additional software needed
+- **Configuration:** See `device-scripts/fortigate/README.md`
+- **Future:** FGFM protocol support planned for more native integration
+
+**Automation Stitch Setup:**
+```
+config system automation-action
+    edit "orchenet-checkin"
+        set action-type webhook
+        set uri "https://orchenet.example.com/api/checkin"
+end
+
+config system automation-trigger
+    edit "orchenet-schedule"
+        set trigger-type scheduled
+        set trigger-frequency hourly
+end
+
+config system automation-stitch
+    edit "orchenet-checkin-stitch"
+        set trigger "orchenet-schedule"
+        set action "orchenet-checkin"
+        set status enable
+end
+```
+
+### MikroTik (RouterOS)
+**Method:** Scheduled Script + SSH
+- **Check-In:** RouterOS script runs periodically via scheduler, calls `/api/checkin`
+- **Configuration Push:** OrcheNet connects via SSH to apply configurations
+- **Advantages:** Highly flexible, full RouterOS scripting available
+- **Configuration:** See `device-scripts/mikrotik/README.md`
+
+**Script Installation:**
+```
+# Upload script
+/system script add name=orchenet-checkin source=[/file get orchenet-checkin.rsc contents]
+
+# Schedule execution
+/system scheduler add name=orchenet-checkin interval=1h on-event="/system script run orchenet-checkin" start-time=startup
+```
+
+### Ubiquiti (UniFi)
+**Method:** Controller API Integration
+- **Check-In:** OrcheNet queries UniFi Controller API periodically
+- **Configuration Push:** OrcheNet sends API calls to Controller
+- **Advantages:** Controller already manages devices, no device-side setup
+- **Configuration:** Configure controller credentials in OrcheNet device settings
+- **Note:** Devices don't need individual setup; controller handles all communication
+
+**Integration:**
+- UniFi Controller API endpoint: `https://controller:8443/api`
+- OrcheNet polls controller for device status
+- Configuration changes applied via controller REST API
+- Supports UDM, USW (switches), UAP (access points)
+
+### WatchGuard (Firebox)
+**Method:** SSH-Only (Allowed Hosts)
+- **Check-In:** OrcheNet initiates SSH connection to poll device status
+- **Configuration Push:** Commands sent via SSH session
+- **Reason:** WatchGuard doesn't support phone-home mechanisms
+- **Advantages:** Simple, secure with allowed-hosts restrictions
+- **Configuration:** See `device-scripts/watchguard/README.md`
+
+**Security Setup:**
+```
+# Restrict SSH access to OrcheNet server only
+set ssh allowed-hosts ORCHENET_SERVER_IP/32
+set admin orchenet allowed-hosts ORCHENET_SERVER_IP/32
+
+# Enable SSH
+set ssh enabled
+set ssh port 22
+```
+
+## Communication Flow by Vendor
+
+### Phone-Home Vendors (FortiGate, MikroTik)
+```
+┌─────────────┐                    ┌─────────────┐
+│   Device    │──── HTTP POST ────>│  OrcheNet   │
+│ (FortiGate/ │<─── Tasks JSON ────│   Server    │
+│  MikroTik)  │                    └─────────────┘
+└─────────────┘
+       │
+       │ If tasks pending
+       │
+       v
+┌─────────────┐                    ┌─────────────┐
+│  OrcheNet   │──── SSH ──────────>│   Device    │
+│   Server    │   Config Commands  │             │
+└─────────────┘<─── Response ──────└─────────────┘
+```
+
+### Controller-Based (UniFi)
+```
+┌─────────────┐                    ┌─────────────┐
+│  OrcheNet   │──── API Query ────>│   UniFi     │
+│   Server    │<─── Device List ───│ Controller  │
+└─────────────┘                    └─────────────┘
+       │                                  │
+       │ Config Change                    │ API Call
+       v                                  v
+┌─────────────┐                    ┌─────────────┐
+│  OrcheNet   │──── API POST ─────>│   UniFi     │
+│   Server    │                    │ Controller  │
+└─────────────┘                    └─────────────┘
+                                          │
+                                          │ Auto-provision
+                                          v
+                                   ┌─────────────┐
+                                   │  UniFi      │
+                                   │  Devices    │
+                                   └─────────────┘
+```
+
+### SSH-Only (WatchGuard)
+```
+┌─────────────┐                    ┌─────────────┐
+│  OrcheNet   │──── SSH Poll ─────>│ WatchGuard  │
+│   Server    │<─── Status ────────│   Firebox   │
+└─────────────┘                    └─────────────┘
+       │
+       │ Config needed
+       v
+┌─────────────┐                    ┌─────────────┐
+│  OrcheNet   │──── SSH ──────────>│ WatchGuard  │
+│   Server    │   CLI Commands     │   Firebox   │
+└─────────────┘<─── Response ──────└─────────────┘
+```
+
+## API Endpoints Reference
+
+### Device Management
+- `POST /api/devices` - Register new device
+- `GET /api/devices` - List all devices
+- `GET /api/devices/{id}` - Get device details
+- `PUT /api/devices/{id}` - Update device
+- `DELETE /api/devices/{id}` - Remove device
+- `PUT /api/devices/{id}/config` - Update device configuration (triggers deployment)
+
+### Task Management
+- `POST /api/tasks` - Create new task
+- `GET /api/tasks` - List tasks (filter by device/status)
+- `GET /api/tasks/{id}` - Get task details
+- `PUT /api/tasks/{id}` - Update task status
+- `POST /api/tasks/{id}/retry` - Retry failed task
+
+### Check-In (Phone-Home)
+- `POST /api/checkin` - Device check-in endpoint
+  - Request body: `{device_name, vendor, serial_number, firmware_version, status_data}`
+  - Returns: List of pending tasks
+- `POST /api/checkin/result/{task_id}` - Submit task execution result
+- `GET /api/checkin/pending/{device_id}` - Get pending tasks for device
