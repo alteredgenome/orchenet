@@ -54,7 +54,7 @@ class Device(Base):
     # Additional device info
     firmware_version = Column(String)
     serial_number = Column(String)
-    metadata = Column(JSON)  # Flexible field for vendor-specific data
+    device_data = Column(JSON)  # Flexible field for vendor-specific data (renamed from metadata)
 
     # Connection credentials (encrypted in production)
     ssh_username = Column(String)
@@ -70,3 +70,9 @@ class Device(Base):
     # Check-in configuration
     check_in_method = Column(String)  # "http", "ssh", "controller"
     check_in_interval = Column(Integer, default=60)  # seconds
+
+    # WireGuard VPN configuration
+    wireguard_public_key = Column(String)  # Device's WireGuard public key
+    wireguard_private_ip = Column(String)  # Assigned VPN IP address
+    wireguard_enabled = Column(Integer, default=0)  # 0=disabled, 1=enabled
+    wireguard_last_handshake = Column(DateTime, nullable=True)  # Last successful handshake

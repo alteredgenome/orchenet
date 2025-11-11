@@ -201,11 +201,11 @@ class TaskProcessor:
             status = await config_executor.get_device_status(device)
 
             # Update device metadata with status
-            if not device.metadata:
-                device.metadata = {}
+            if not device.device_data:
+                device.device_data = {}
 
-            device.metadata["last_status"] = status
-            device.metadata["last_status_collection"] = datetime.utcnow().isoformat()
+            device.device_data["last_status"] = status
+            device.device_data["last_status_collection"] = datetime.utcnow().isoformat()
             device.last_check_in = datetime.utcnow()
 
             # Update device status based on collection success

@@ -1,8 +1,8 @@
 # OrcheNet Quick Start Guide
 
-This guide will get you up and running with OrcheNet in minutes.
+Fast track to get OrcheNet running on Debian 13 with MikroTik routers in 30 minutes.
 
-## Prerequisites
+## What You Need
 
 ### Required Software
 - **Python 3.9+**: https://www.python.org/downloads/

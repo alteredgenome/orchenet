@@ -1,0 +1,78 @@
+# Syncthing Ignore Patterns for OrcheNet
+# Files matching these patterns will NOT be synced
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.tox/
+*.egg-info/
+
+# Databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Node.js
+node_modules/
+dist/
+.vite/
+.cache/
+
+# Build artifacts
+build/
+*.so
+*.dylib
+*.dll
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE/Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Git
+.git/
+
+# Syncthing
+.stfolder/
+.stversions/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.production
+
+# Test coverage
+.coverage
+htmlcov/
+coverage/
+
+# Documentation builds
+docs/_build/
+site/

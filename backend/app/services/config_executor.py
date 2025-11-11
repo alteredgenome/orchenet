@@ -100,7 +100,10 @@ class ConfigExecutor:
         Returns:
             Execution result
         """
-        if not device.ip_address:
+        # Prefer WireGuard IP if enabled, otherwise use regular IP
+        host = device.wireguard_private_ip if device.wireguard_enabled else device.ip_address
+
+        if not host:
             raise ConfigExecutorError("Device IP address not configured")
 
         if not device.ssh_username:
@@ -109,7 +112,7 @@ class ConfigExecutor:
         try:
             # Execute commands via SSH
             outputs = await ssh_manager.execute_commands(
-                host=device.ip_address,
+                host=host,
                 username=device.ssh_username,
                 password=device.ssh_password,
                 key_path=device.ssh_key,
@@ -184,7 +187,7 @@ class ConfigExecutor:
                 controller_url=device.api_url,
                 username=device.ssh_username or "admin",
                 password=device.ssh_password or device.api_key,
-                site=device.metadata.get("unifi_site", "default") if device.metadata else "default"
+                site=device.device_data.get("unifi_site", "default") if device.device_data else "default"
             ) as controller:
                 results = await controller.apply_configuration(parsed_ops)
 
@@ -229,7 +232,7 @@ class ConfigExecutor:
                     controller_url=device.api_url,
                     username=device.ssh_username or "admin",
                     password=device.ssh_password or device.api_key,
-                    site=device.metadata.get("unifi_site", "default") if device.metadata else "default"
+                    site=device.device_data.get("unifi_site", "default") if device.device_data else "default"
                 ) as controller:
                     await controller.get_devices()
                 return True
@@ -272,7 +275,7 @@ class ConfigExecutor:
                     controller_url=device.api_url,
                     username=device.ssh_username or "admin",
                     password=device.ssh_password or device.api_key,
-                    site=device.metadata.get("unifi_site", "default") if device.metadata else "default"
+                    site=device.device_data.get("unifi_site", "default") if device.device_data else "default"
                 ) as controller:
                     if device.mac_address:
                         status = await controller.get_device_status(device.mac_address)

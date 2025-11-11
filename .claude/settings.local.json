@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(where:*)",
+      "Bash(choco install:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

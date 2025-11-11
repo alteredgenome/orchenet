@@ -94,9 +94,15 @@ if not exist ".env" (
 REM Initialize database
 echo.
 echo Initializing database with sample data...
+call venv\Scripts\activate.bat
 python init_db.py --seed
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Failed to initialize database
+    echo.
+    echo Try running manually from backend directory:
+    echo   cd backend
+    echo   venv\Scripts\activate.bat
+    echo   python init_db.py --seed
     pause
     exit /b 1
 )

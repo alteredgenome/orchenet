@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
-from .routers import devices, tasks, checkin
+from .routers import devices, tasks, checkin, wireguard, webcli
 from .services.task_processor import task_processor
 
 # Configure logging
@@ -64,6 +64,8 @@ app.add_middleware(
 app.include_router(devices.router)
 app.include_router(tasks.router)
 app.include_router(checkin.router)
+app.include_router(wireguard.router)
+app.include_router(webcli.router)
 
 @app.get("/")
 async def root():

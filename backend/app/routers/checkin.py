@@ -60,10 +60,10 @@ async def device_checkin(
 
     # Update status data in metadata
     if checkin_data.status_data:
-        if not device.metadata:
-            device.metadata = {}
-        device.metadata["last_status"] = checkin_data.status_data
-        device.metadata["last_status_time"] = datetime.utcnow().isoformat()
+        if not device.device_data:
+            device.device_data = {}
+        device.device_data["last_status"] = checkin_data.status_data
+        device.device_data["last_status_time"] = datetime.utcnow().isoformat()
 
     db.commit()
 

@@ -73,7 +73,7 @@ def seed_database():
                 ssh_password="admin",
                 check_in_method="controller",
                 check_in_interval=300,
-                metadata={"unifi_site": "default"}
+                device_data={"unifi_site": "default"}
             ),
             Device(
                 name="fw-guest",
