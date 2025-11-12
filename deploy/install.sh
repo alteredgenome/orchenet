@@ -81,29 +81,43 @@ else
     echo -e "${GREEN}✓ User $USER already exists${NC}"
 fi
 
-# Copy application files
-echo -e "${YELLOW}Step 5: Copying application files...${NC}"
-if [ ! -d "$INSTALL_DIR" ]; then
-    mkdir -p $INSTALL_DIR
-fi
+# Setup application files
+echo -e "${YELLOW}Step 5: Setting up application files...${NC}"
 
 # Determine source directory (where this script is run from)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "Copying files from: $SCRIPT_DIR"
-echo "Installing to: $INSTALL_DIR"
+echo "Source directory: $SCRIPT_DIR"
+echo "Install directory: $INSTALL_DIR"
 
-# Copy backend
-cp -r "$SCRIPT_DIR/backend" "$INSTALL_DIR/"
-# Copy frontend
-cp -r "$SCRIPT_DIR/frontend" "$INSTALL_DIR/"
-# Copy agent
-cp -r "$SCRIPT_DIR/agent" "$INSTALL_DIR/"
-# Copy device scripts
-cp -r "$SCRIPT_DIR/device-scripts" "$INSTALL_DIR/"
-# Copy documentation
-cp -r "$SCRIPT_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
-cp -r "$SCRIPT_DIR/CLAUDE.md" "$INSTALL_DIR/" 2>/dev/null || true
+# Check if we're already in the install directory
+if [ "$SCRIPT_DIR" = "$INSTALL_DIR" ]; then
+    echo -e "${GREEN}✓ Already in install directory, skipping copy${NC}"
+else
+    # Different location, need to copy
+    if [ ! -d "$INSTALL_DIR" ]; then
+        mkdir -p $INSTALL_DIR
+    fi
+
+    echo "Copying files from: $SCRIPT_DIR"
+    echo "Installing to: $INSTALL_DIR"
+
+    # Copy backend
+    cp -r "$SCRIPT_DIR/backend" "$INSTALL_DIR/"
+    # Copy frontend
+    cp -r "$SCRIPT_DIR/frontend" "$INSTALL_DIR/"
+    # Copy agent
+    cp -r "$SCRIPT_DIR/agent" "$INSTALL_DIR/"
+    # Copy device scripts
+    cp -r "$SCRIPT_DIR/device-scripts" "$INSTALL_DIR/"
+    # Copy deploy scripts
+    cp -r "$SCRIPT_DIR/deploy" "$INSTALL_DIR/"
+    # Copy documentation
+    cp "$SCRIPT_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/CLAUDE.md" "$INSTALL_DIR/" 2>/dev/null || true
+
+    echo -e "${GREEN}✓ Application files copied${NC}"
+fi
 
 # Create necessary directories
 mkdir -p "$INSTALL_DIR/logs"
@@ -114,7 +128,7 @@ mkdir -p "/etc/wireguard"
 chown -R $USER:$GROUP $INSTALL_DIR
 chmod -R 755 $INSTALL_DIR
 
-echo -e "${GREEN}✓ Application files copied${NC}"
+echo -e "${GREEN}✓ Application files ready${NC}"
 
 # Create Python virtual environment
 echo -e "${YELLOW}Step 6: Creating Python virtual environment...${NC}"
