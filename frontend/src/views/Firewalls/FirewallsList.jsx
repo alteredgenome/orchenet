@@ -1,11 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, RefreshCw, Download, Upload, Settings, MoreVertical } from 'lucide-react'
+import AddDeviceWizard from '../../components/AddDeviceWizard'
+import api from '../../services/api'
 
 function FirewallsList() {
   const [view, setView] = useState('list') // list or grid
+  const [showAddWizard, setShowAddWizard] = useState(false)
+  const [devices, setDevices] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock data
+  // Fetch devices from API
+  const fetchDevices = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/api/devices')
+      setDevices(response.data)
+    } catch (error) {
+      console.error('Error fetching devices:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDevices()
+  }, [])
+
+  const handleAddSuccess = () => {
+    fetchDevices() // Refresh device list
+  }
+
+  // Mock data for display if no devices
   const firewalls = [
     {
       id: 1,
@@ -61,12 +87,27 @@ function FirewallsList() {
     }
   ]
 
+  // Use real devices if available, otherwise show mock data
+  const displayDevices = devices.length > 0 ? devices : firewalls
+  const stats = {
+    total: displayDevices.length,
+    online: displayDevices.filter(d => d.status === 'online').length,
+    offline: displayDevices.filter(d => d.status === 'offline' || d.status === 'pending').length,
+    avgCpu: Math.round(displayDevices.reduce((acc, d) => acc + (d.cpu || 0), 0) / (displayDevices.length || 1))
+  }
+
   return (
     <>
+      <AddDeviceWizard
+        isOpen={showAddWizard}
+        onClose={() => setShowAddWizard(false)}
+        onSuccess={handleAddSuccess}
+      />
+
       <div className="content-header">
         <h1 className="content-title">Firewalls / Routers</h1>
         <div className="content-actions">
-          <button className="btn btn-secondary">
+          <button className="btn btn-secondary" onClick={fetchDevices}>
             <RefreshCw size={16} />
             Refresh
           </button>
@@ -74,7 +115,7 @@ function FirewallsList() {
             <Download size={16} />
             Export
           </button>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={() => setShowAddWizard(true)}>
             <Plus size={16} />
             Add Device
           </button>
@@ -86,19 +127,19 @@ function FirewallsList() {
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-label">Total Firewalls</div>
-            <div className="stat-value">4</div>
+            <div className="stat-value">{stats.total}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Online</div>
-            <div className="stat-value" style={{color: 'var(--accent-green)'}}>3</div>
+            <div className="stat-value" style={{color: 'var(--accent-green)'}}>{stats.online}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Offline</div>
-            <div className="stat-value" style={{color: 'var(--accent-red)'}}>1</div>
+            <div className="stat-value" style={{color: 'var(--accent-red)'}}>{stats.offline}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Avg CPU Usage</div>
-            <div className="stat-value">29%</div>
+            <div className="stat-value">{stats.avgCpu}%</div>
           </div>
         </div>
 
@@ -131,7 +172,21 @@ function FirewallsList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {firewalls.map(firewall => (
+                  {loading && (
+                    <tr>
+                      <td colSpan="10" style={{textAlign: 'center', padding: '40px'}}>
+                        Loading devices...
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && displayDevices.length === 0 && (
+                    <tr>
+                      <td colSpan="10" style={{textAlign: 'center', padding: '40px'}}>
+                        No devices found. Click "Add Device" to get started.
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && displayDevices.map(firewall => (
                     <tr key={firewall.id}>
                       <td>
                         <Link
