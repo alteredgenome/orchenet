@@ -71,7 +71,8 @@ def generate_mikrotik_provisioning_script(
 
     tunnel_name = f"orcatun_{format_mac_for_tunnel(mac_address)}"
 
-    script = f'''# OrcheNet MikroTik Provisioning Script
+    # Use format() instead of f-string to avoid brace escaping issues
+    script = '''# OrcheNet MikroTik Provisioning Script
 # Generated automatically for device: {device_name}
 # MAC Address: {mac_address}
 # WireGuard Tunnel: {tunnel_name}
@@ -247,7 +248,17 @@ def generate_mikrotik_provisioning_script(
 :put "Check-in interval: 5 minutes"
 :put "Script can be re-run safely (existing configs won't be duplicated)"
 :put ""
-'''
+'''.format(
+        device_name=device_name,
+        mac_address=mac_address,
+        tunnel_name=tunnel_name,
+        server_ip=server_ip,
+        server_port=server_port,
+        server_public_key=server_public_key,
+        device_private_key=device_private_key,
+        device_vpn_ip=device_vpn_ip,
+        api_url=api_url
+    )
 
     return script
 
