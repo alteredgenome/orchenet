@@ -205,7 +205,7 @@ Type=simple
 User=$USER
 Group=$GROUP
 WorkingDirectory=$INSTALL_DIR/backend
-Environment="PATH=$VENV_DIR/bin"
+Environment="PATH=$VENV_DIR/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=$VENV_DIR/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=10
