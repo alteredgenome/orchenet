@@ -3,6 +3,7 @@ Device provisioning API endpoints
 Generates provisioning scripts for devices
 """
 import subprocess
+import os
 from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -10,7 +11,6 @@ from pydantic import BaseModel
 
 from ..database import get_db
 from ..models.device import Device
-from ..routers.wireguard import enable_wireguard_for_device
 
 router = APIRouter(prefix="/api/devices", tags=["provisioning"])
 
@@ -283,21 +283,20 @@ async def generate_provision_script(
     device_private_key, device_public_key = generate_wireguard_keypair()
 
     # Enable WireGuard for device (this allocates VPN IP and configures server)
-    from ..routers.wireguard import WireguardPeerCreate
-    peer_request = WireguardPeerCreate(
+    from ..routers.wireguard import WireguardPeerRequest, enable_wireguard_for_device, get_wireguard_info
+
+    peer_request = WireguardPeerRequest(
         device_id=request.device_id,
         public_key=device_public_key
     )
 
-    # Import the function directly
-    from ..routers.wireguard import get_wireguard_info
-    wireguard_info = get_wireguard_info(db)
-
     # Call enable_wireguard_for_device
     peer_response = await enable_wireguard_for_device(peer_request, db)
 
-    # Get server info from environment or config
-    import os
+    # Get server info
+    wireguard_info = await get_wireguard_info()
+
+    # Get server IP from environment or config
     import socket
     server_ip = os.getenv('ORCHENET_PUBLIC_IP', None)
     if not server_ip:
@@ -314,10 +313,10 @@ async def generate_provision_script(
         device_name=device.name,
         mac_address=request.mac_address,
         server_ip=server_ip,
-        server_port=wireguard_info['listen_port'],
-        server_public_key=wireguard_info['server_public_key'],
+        server_port=wireguard_info.listen_port,
+        server_public_key=wireguard_info.server_public_key,
         device_private_key=device_private_key,
-        device_vpn_ip=peer_response['private_ip'],
+        device_vpn_ip=peer_response.private_ip,
         api_url=api_url
     )
 
@@ -329,7 +328,7 @@ async def generate_provision_script(
         "script": script,
         "filename": filename,
         "wireguard_info": {
-            "vpn_ip": peer_response['private_ip'],
+            "vpn_ip": peer_response.private_ip,
             "server_ip": "10.99.0.1",
             "tunnel_name": tunnel_name,
             "public_key": device_public_key
