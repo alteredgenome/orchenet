@@ -121,7 +121,8 @@ function AddDeviceWizard({ isOpen, onClose, onSuccess }) {
       setStep(4)
     } catch (err) {
       console.error('Error creating device:', err)
-      setError(err.response?.data?.detail || 'Failed to create device. Please try again.')
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create device. Please try again.'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
