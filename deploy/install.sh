@@ -56,10 +56,14 @@ apt-get install -y \
     nginx \
     sqlite3 \
     curl \
-    wget
+    wget \
+    sudo \
+    procps
 
 # Enable IP forwarding for WireGuard
 echo -e "${YELLOW}Step 3: Configuring IP forwarding...${NC}"
+# Create sysctl.conf if it doesn't exist
+touch /etc/sysctl.conf
 if ! grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf; then
     echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
     sysctl -p
