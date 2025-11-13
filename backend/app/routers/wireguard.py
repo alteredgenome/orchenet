@@ -91,8 +91,8 @@ async def get_wireguard_info():
     Get WireGuard server information.
     """
     try:
-        # Read server public key from config
-        config_content = wireguard_manager.config_file.read_text()
+        # Read server public key from config using sudo
+        config_content = await wireguard_manager._run_command(f"sudo cat {wireguard_manager.config_file}")
 
         # Extract private key and derive public key
         import re
