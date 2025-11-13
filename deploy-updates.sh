@@ -15,13 +15,14 @@ git pull
 echo "Updating sudoers configuration for WireGuard..."
 sudo bash -c 'cat > /etc/sudoers.d/orchenet <<EOF
 # Allow orchenet user to manage WireGuard without password
-orchenet ALL=(ALL) NOPASSWD: /usr/bin/wg
-orchenet ALL=(ALL) NOPASSWD: /usr/bin/wg-quick
+orchenet ALL=(ALL) NOPASSWD: /usr/bin/wg *
+orchenet ALL=(ALL) NOPASSWD: /usr/bin/wg-quick *
 orchenet ALL=(ALL) NOPASSWD: /bin/systemctl restart wg-quick@*
 orchenet ALL=(ALL) NOPASSWD: /bin/systemctl reload wg-quick@*
-orchenet ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/wireguard/*.conf
-orchenet ALL=(ALL) NOPASSWD: /bin/cat /etc/wireguard/*.conf
-orchenet ALL=(ALL) NOPASSWD: /bin/chmod * /etc/wireguard/*.conf
+orchenet ALL=(ALL) NOPASSWD: /usr/bin/tee *
+orchenet ALL=(ALL) NOPASSWD: /bin/cat *
+orchenet ALL=(ALL) NOPASSWD: /bin/chmod *
+orchenet ALL=(ALL) NOPASSWD: /usr/sbin/ip *
 EOF
 chmod 440 /etc/sudoers.d/orchenet'
 echo "✓ Sudoers configuration updated"

@@ -294,13 +294,14 @@ echo -e "${GREEN}✓ Services enabled and started${NC}"
 echo -e "${YELLOW}Step 14: Configuring sudoers for WireGuard...${NC}"
 cat > /etc/sudoers.d/orchenet <<EOF
 # Allow orchenet user to manage WireGuard without password
-$USER ALL=(ALL) NOPASSWD: /usr/bin/wg
-$USER ALL=(ALL) NOPASSWD: /usr/bin/wg-quick
+$USER ALL=(ALL) NOPASSWD: /usr/bin/wg *
+$USER ALL=(ALL) NOPASSWD: /usr/bin/wg-quick *
 $USER ALL=(ALL) NOPASSWD: /bin/systemctl restart wg-quick@*
 $USER ALL=(ALL) NOPASSWD: /bin/systemctl reload wg-quick@*
-$USER ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/wireguard/*.conf
-$USER ALL=(ALL) NOPASSWD: /bin/cat /etc/wireguard/*.conf
-$USER ALL=(ALL) NOPASSWD: /bin/chmod * /etc/wireguard/*.conf
+$USER ALL=(ALL) NOPASSWD: /usr/bin/tee *
+$USER ALL=(ALL) NOPASSWD: /bin/cat *
+$USER ALL=(ALL) NOPASSWD: /bin/chmod *
+$USER ALL=(ALL) NOPASSWD: /usr/sbin/ip *
 EOF
 
 chmod 440 /etc/sudoers.d/orchenet
