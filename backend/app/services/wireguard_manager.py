@@ -84,9 +84,11 @@ PostDown = iptables -D FORWARD -i {self.interface} -j ACCEPT; iptables -t nat -D
 # Peers will be added below
 """
 
-            # Write configuration (requires root)
-            self.config_file.write_text(config_content)
-            self.config_file.chmod(0o600)
+            # Write configuration using sudo
+            await self._run_command(
+                f"echo '{config_content}' | sudo tee {self.config_file} > /dev/null"
+            )
+            await self._run_command(f"sudo chmod 600 {self.config_file}")
 
             logger.info(f"WireGuard server configuration created at {self.config_file}")
 
@@ -133,14 +135,15 @@ AllowedIPs = {allowed_ips}
 
 """
 
-            # Append to config file
-            with open(self.config_file, "a") as f:
-                f.write(peer_config)
+            # Append to config file using sudo tee (requires sudoers config)
+            await self._run_command(
+                f"echo '{peer_config}' | sudo tee -a {self.config_file} > /dev/null"
+            )
 
             # Add peer to running interface if active
             if await self._is_interface_up():
                 await self._run_command(
-                    f"wg set {self.interface} peer {peer_public_key} allowed-ips {allowed_ips}"
+                    f"sudo wg set {self.interface} peer {peer_public_key} allowed-ips {allowed_ips}"
                 )
 
             logger.info(f"Added WireGuard peer: {peer_name} ({peer_ip})")
@@ -163,16 +166,20 @@ AllowedIPs = {allowed_ips}
         try:
             # Remove from running interface
             if await self._is_interface_up():
-                await self._run_command(f"wg set {self.interface} peer {peer_public_key} remove")
+                await self._run_command(f"sudo wg set {self.interface} peer {peer_public_key} remove")
 
             # Remove from config file
-            config_content = self.config_file.read_text()
+            # Read current config
+            config_content = await self._run_command(f"cat {self.config_file}")
 
             # Find and remove peer section
             pattern = rf"# .*\n\[Peer\]\nPublicKey = {re.escape(peer_public_key)}\n.*?\n\n"
             config_content = re.sub(pattern, "", config_content, flags=re.MULTILINE)
 
-            self.config_file.write_text(config_content)
+            # Write updated config using sudo
+            await self._run_command(
+                f"echo '{config_content}' | sudo tee {self.config_file} > /dev/null"
+            )
 
             logger.info(f"Removed WireGuard peer: {peer_public_key}")
             return True
@@ -195,7 +202,7 @@ AllowedIPs = {allowed_ips}
             if not await self._is_interface_up():
                 return None
 
-            output = await self._run_command(f"wg show {self.interface} dump")
+            output = await self._run_command(f"sudo wg show {self.interface} dump")
 
             # Parse wg show output
             for line in output.strip().split("\n")[1:]:  # Skip header
@@ -228,7 +235,7 @@ AllowedIPs = {allowed_ips}
             if not await self._is_interface_up():
                 return []
 
-            output = await self._run_command(f"wg show {self.interface} dump")
+            output = await self._run_command(f"sudo wg show {self.interface} dump")
             peers = []
 
             for line in output.strip().split("\n")[1:]:  # Skip header
@@ -257,7 +264,7 @@ AllowedIPs = {allowed_ips}
             True if successful
         """
         try:
-            await self._run_command(f"wg-quick up {self.interface}")
+            await self._run_command(f"sudo wg-quick up {self.interface}")
             logger.info(f"WireGuard interface {self.interface} started")
             return True
         except Exception as e:
@@ -272,7 +279,7 @@ AllowedIPs = {allowed_ips}
             True if successful
         """
         try:
-            await self._run_command(f"wg-quick down {self.interface}")
+            await self._run_command(f"sudo wg-quick down {self.interface}")
             logger.info(f"WireGuard interface {self.interface} stopped")
             return True
         except Exception as e:

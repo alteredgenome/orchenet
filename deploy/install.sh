@@ -290,9 +290,23 @@ systemctl start orchenet-backend
 
 echo -e "${GREEN}✓ Services enabled and started${NC}"
 
+# Configure sudoers for WireGuard management
+echo -e "${YELLOW}Step 14: Configuring sudoers for WireGuard...${NC}"
+cat > /etc/sudoers.d/orchenet <<EOF
+# Allow orchenet user to manage WireGuard without password
+$USER ALL=(ALL) NOPASSWD: /usr/bin/wg
+$USER ALL=(ALL) NOPASSWD: /usr/bin/wg-quick
+$USER ALL=(ALL) NOPASSWD: /bin/systemctl restart wg-quick@*
+$USER ALL=(ALL) NOPASSWD: /bin/systemctl reload wg-quick@*
+$USER ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/wireguard/*.conf
+EOF
+
+chmod 440 /etc/sudoers.d/orchenet
+echo -e "${GREEN}✓ Sudoers configured for WireGuard management${NC}"
+
 # Configure firewall (if ufw is installed)
 if command -v ufw &> /dev/null; then
-    echo -e "${YELLOW}Step 14: Configuring firewall...${NC}"
+    echo -e "${YELLOW}Step 15: Configuring firewall...${NC}"
     ufw allow 80/tcp comment "HTTP"
     ufw allow 443/tcp comment "HTTPS"
     ufw allow $WIREGUARD_PORT/udp comment "WireGuard"
@@ -303,7 +317,7 @@ else
 fi
 
 # Create convenience scripts
-echo -e "${YELLOW}Step 15: Creating management scripts...${NC}"
+echo -e "${YELLOW}Step 16: Creating management scripts...${NC}"
 
 # Status script
 cat > $INSTALL_DIR/status.sh <<'EOF'
