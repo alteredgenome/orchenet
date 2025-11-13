@@ -294,9 +294,9 @@ async def generate_provision_script(
     device_private_key, device_public_key = generate_wireguard_keypair()
 
     # Enable WireGuard for device (this allocates VPN IP and configures server)
-    from ..routers.wireguard import WireguardPeerRequest, enable_wireguard_for_device, get_wireguard_info
+    from ..routers.wireguard import WireGuardPeerRequest, enable_wireguard_for_device, get_wireguard_info
 
-    peer_request = WireguardPeerRequest(
+    peer_request = WireGuardPeerRequest(
         device_id=request.device_id,
         public_key=device_public_key
     )
