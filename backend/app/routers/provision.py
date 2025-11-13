@@ -169,20 +169,20 @@ def generate_mikrotik_provisioning_script(
 
 # 8. Create Check-in Script
 :put "Step 8: Creating check-in script..."
-:local checkinScriptSource ":local apiUrl \\"$apiUrl\\"\\n\\
-:local deviceName [/system identity get name]\\n\\
-:local macAddress \\"{mac_address}\\"\\n\\
-:local serialNumber [/system routerboard get serial-number]\\n\\
-:local firmwareVersion [/system resource get version]\\n\\
-:local uptimeSeconds [/system resource get uptime]\\n\\
-:local cpuLoad [/system resource get cpu-load]\\n\\
-:local freeMemory [/system resource get free-memory]\\n\\
-:local totalMemory [/system resource get total-memory]\\n\\
-:local wgStatus \\"down\\"\\n\\
+:local checkinScriptSource ":global apiUrl \\"$apiUrl\\"\\n\\
+:global deviceName [/system identity get name]\\n\\
+:global macAddress \\"{mac_address}\\"\\n\\
+:global serialNumber [/system routerboard get serial-number]\\n\\
+:global firmwareVersion \\"RouterOS-7.x\\"\\n\\
+:global uptimeSeconds [/system resource get uptime]\\n\\
+:global cpuLoad [/system resource get cpu-load]\\n\\
+:global freeMemory [/system resource get free-memory]\\n\\
+:global totalMemory [/system resource get total-memory]\\n\\
+:global wgStatus \\"down\\"\\n\\
 :if ([/interface get [find name=\\"$tunnelName\\"] running]) do={{{{:set wgStatus \\"up\\"}}}}\\n\\
-:local jsonData \\"{{\\\\\\\"device_name\\\\\\\":\\\\\\\"\$deviceName\\\\\\",\\\\\\\"vendor\\\\\\\":\\\\\\\"mikrotik\\\\\\",\\\\\\\"mac_address\\\\\\\":\\\\\\\"\$macAddress\\\\\\",\\\\\\\"serial_number\\\\\\\":\\\\\\\"\$serialNumber\\\\\\",\\\\\\\"firmware_version\\\\\\\":\\\\\\\"\$firmwareVersion\\\\\\",\\\\\\\"status_data\\\\\\\":{{\\\\\\\"uptime\\\\\\\":\$uptimeSeconds,\\\\\\\"cpu_load\\\\\\\":\$cpuLoad,\\\\\\\"free_memory\\\\\\\":\$freeMemory,\\\\\\\"total_memory\\\\\\\":\$totalMemory,\\\\\\\"wireguard_status\\\\\\\":\\\\\\\"\$wgStatus\\\\\\\"}}]]}}\\"\\n\\
+:global jsonData \\"{{\\\\\\\"device_name\\\\\\\":\\\\\\\"\$deviceName\\\\\\",\\\\\\\"vendor\\\\\\\":\\\\\\\"mikrotik\\\\\\",\\\\\\\"mac_address\\\\\\\":\\\\\\\"\$macAddress\\\\\\",\\\\\\\"serial_number\\\\\\\":\\\\\\\"\$serialNumber\\\\\\",\\\\\\\"firmware_version\\\\\\\":\\\\\\\"\$firmwareVersion\\\\\\",\\\\\\\"status_data\\\\\\\":{{\\\\\\\"uptime\\\\\\\":\\\\\\\"\$uptimeSeconds\\\\\\",\\\\\\\"cpu_load\\\\\\\":\$cpuLoad,\\\\\\\"free_memory\\\\\\\":\$freeMemory,\\\\\\\"total_memory\\\\\\\":\$totalMemory,\\\\\\\"wireguard_status\\\\\\\":\\\\\\\"\$wgStatus\\\\\\\"}}]]}}\\"\\n\\
 :do {{{{\\n\\
-    /tool fetch url=\$apiUrl mode=https http-method=post http-header-field=\\"Content-Type: application/json\\" http-data=\$jsonData dst-path=checkin-response.json\\n\\
+    /tool fetch url=\$apiUrl mode=http http-method=post http-header-field=\\"Content-Type: application/json\\" http-data=\$jsonData dst-path=checkin-response.json\\n\\
     :log info \\"OrcheNet: Check-in successful\\"\\n\\
 }}}} on-error={{{{\\n\\
     :log error \\"OrcheNet: Check-in failed\\"\\n\\
