@@ -3,13 +3,15 @@ Application configuration using Pydantic Settings
 """
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pathlib import Path
 
 
 class Settings(BaseSettings):
     """Application settings"""
 
     # Database
-    database_url: str = "sqlite:///./orchenet.db"
+    # Use absolute path to data directory
+    database_url: str = "sqlite:////opt/orchenet/data/orchenet.db"
 
     # Security
     secret_key: str = "change-this-in-production"
