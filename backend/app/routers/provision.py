@@ -96,16 +96,16 @@ def generate_mikrotik_provisioning_script(
 
 # 1. Configure WireGuard Interface
 :put "Step 1: Configuring WireGuard interface..."
-:do {{
+:do {{{{
     /interface wireguard add name=$tunnelName private-key=$devicePrivateKey listen-port=51821 comment="OrcheNet VPN"
     :put "  ✓ WireGuard interface '$tunnelName' created"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Interface already exists or failed to create"
-}}
+}}}}
 
 # 2. Configure WireGuard Peer (OrcheNet Server)
 :put "Step 2: Adding OrcheNet server as WireGuard peer..."
-:do {{
+:do {{{{
     /interface wireguard peers add interface=$tunnelName \\
         public-key=$orchenetServerPublicKey \\
         endpoint-address=$orchenetServer \\
@@ -114,58 +114,58 @@ def generate_mikrotik_provisioning_script(
         persistent-keepalive=25s \\
         comment="OrcheNet Server"
     :put "  ✓ Server peer added"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Peer already exists or failed to add"
-}}
+}}}}
 
 # 3. Assign IP Address to WireGuard Interface
 :put "Step 3: Assigning IP address to WireGuard interface..."
-:do {{
+:do {{{{
     /ip address add address=$deviceVpnIp interface=$tunnelName comment="OrcheNet VPN IP"
     :put "  ✓ IP address assigned: $deviceVpnIp"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! IP address already exists or failed to assign"
-}}
+}}}}
 
 # 4. Add Route to OrcheNet Server via WireGuard
 :put "Step 4: Adding route to OrcheNet network..."
-:do {{
+:do {{{{
     /ip route add dst-address=10.99.0.0/24 gateway=$tunnelName comment="OrcheNet VPN Route"
     :put "  ✓ Route added"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Route already exists or failed to add"
-}}
+}}}}
 
 # 5. Create SSH User for OrcheNet
 :put "Step 5: Creating SSH user for OrcheNet..."
-:do {{
+:do {{{{
     /user add name=$sshUser password=$sshPassword group=full comment="OrcheNet Management"
     :put "  ✓ User '$sshUser' created"
     :put "  ⚠ IMPORTANT: Change password with: /user set $sshUser password=YOUR_SECURE_PASSWORD"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! User already exists or failed to create"
-}}
+}}}}
 
 # 6. Enable SSH Service
 :put "Step 6: Enabling SSH service..."
-:do {{
+:do {{{{
     /ip service set ssh disabled=no port=22
     :put "  ✓ SSH service enabled on port 22"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! SSH service configuration failed"
-}}
+}}}}
 
 # 7. Add Firewall Rule to Allow SSH from OrcheNet VPN
 :put "Step 7: Configuring firewall for OrcheNet access..."
-:do {{
+:do {{{{
     /ip firewall filter add chain=input protocol=tcp dst-port=22 \\
         src-address=10.99.0.0/24 in-interface=$tunnelName \\
         action=accept place-before=0 \\
         comment="Allow SSH from OrcheNet VPN"
     :put "  ✓ Firewall rule added"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Firewall rule already exists or failed to add"
-}}
+}}}}
 
 # 8. Create Check-in Script
 :put "Step 8: Creating check-in script..."
@@ -188,25 +188,25 @@ def generate_mikrotik_provisioning_script(
     :log error \\"OrcheNet: Check-in failed\\"\\n\\
 }}"
 
-:do {{
+:do {{{{
     /system script add name=orchenet-checkin owner=admin policy=read,write,policy,test source=$checkinScriptSource comment="OrcheNet automatic check-in"
     :put "  ✓ Check-in script created"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Check-in script already exists or failed to create"
-}}
+}}}}
 
 # 9. Schedule Check-in Script
 :put "Step 9: Scheduling automatic check-ins..."
-:do {{
+:do {{{{
     /system scheduler add name=orchenet-checkin \\
         interval=5m \\
         on-event="/system script run orchenet-checkin" \\
         start-time=startup \\
         comment="OrcheNet periodic check-in (every 5 minutes)"
     :put "  ✓ Scheduler created (5 minute interval)"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ! Scheduler already exists or failed to create"
-}}
+}}}}
 
 # 10. Test WireGuard Connection
 :put "Step 10: Testing WireGuard connection..."
@@ -226,12 +226,12 @@ def generate_mikrotik_provisioning_script(
 # 11. Run initial check-in
 :put "Step 11: Performing initial check-in..."
 :delay 2s
-:do {{
+:do {{{{
     /system script run orchenet-checkin
     :put "  ✓ Initial check-in completed"
-}} on-error={{
+}}}} on-error={{{{
     :put "  ⚠ WARNING: Initial check-in failed (device will retry in 5 minutes)"
-}}
+}}}}
 
 :put ""
 :put "===== Provisioning Complete ====="
