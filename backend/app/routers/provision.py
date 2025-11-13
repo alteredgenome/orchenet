@@ -180,7 +180,7 @@ def generate_mikrotik_provisioning_script(
 :local totalMemory [/system resource get total-memory]\\n\\
 :local wgStatus \\"down\\"\\n\\
 :if ([/interface get [find name=\\"$tunnelName\\"] running]) do={{{{:set wgStatus \\"up\\"}}}}\\n\\
-:local jsonData \\"{{{{\\\\\\\"device_name\\\\\\\":\\\\\\\"\$deviceName\\\\\\",\\\\\\\"vendor\\\\\\\":\\\\\\\"mikrotik\\\\\\",\\\\\\\"mac_address\\\\\\\":\\\\\\\"\$macAddress\\\\\\",\\\\\\\"serial_number\\\\\\\":\\\\\\\"\$serialNumber\\\\\\",\\\\\\\"firmware_version\\\\\\\":\\\\\\\"\$firmwareVersion\\\\\\",\\\\\\\"status_data\\\\\\\":{{{{\\\\\\\"uptime\\\\\\\":\$uptimeSeconds,\\\\\\\"cpu_load\\\\\\\":\$cpuLoad,\\\\\\\"free_memory\\\\\\\":\$freeMemory,\\\\\\\"total_memory\\\\\\\":\$totalMemory,\\\\\\\"wireguard_status\\\\\\\":\\\\\\\"\$wgStatus\\\\\\\"}}}}}}}}}\\"\\n\\
+:local jsonData \\"{{{{\\\\\\\"device_name\\\\\\\":\\\\\\\"\$deviceName\\\\\\",\\\\\\\"vendor\\\\\\\":\\\\\\\"mikrotik\\\\\\",\\\\\\\"mac_address\\\\\\\":\\\\\\\"\$macAddress\\\\\\",\\\\\\\"serial_number\\\\\\\":\\\\\\\"\$serialNumber\\\\\\",\\\\\\\"firmware_version\\\\\\\":\\\\\\\"\$firmwareVersion\\\\\\",\\\\\\\"status_data\\\\\\\":{{{{\\\\\\\"uptime\\\\\\\":\$uptimeSeconds,\\\\\\\"cpu_load\\\\\\\":\$cpuLoad,\\\\\\\"free_memory\\\\\\\":\$freeMemory,\\\\\\\"total_memory\\\\\\\":\$totalMemory,\\\\\\\"wireguard_status\\\\\\\":\\\\\\\"\$wgStatus\\\\\\\"}}}}]]}}}}\\"\\n\\
 :do {{{{\\n\\
     /tool fetch url=\$apiUrl mode=https http-method=post http-header-field=\\"Content-Type: application/json\\" http-data=\$jsonData dst-path=checkin-response.json\\n\\
     :log info \\"OrcheNet: Check-in successful\\"\\n\\
