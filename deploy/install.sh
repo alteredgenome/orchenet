@@ -299,6 +299,8 @@ $USER ALL=(ALL) NOPASSWD: /usr/bin/wg-quick
 $USER ALL=(ALL) NOPASSWD: /bin/systemctl restart wg-quick@*
 $USER ALL=(ALL) NOPASSWD: /bin/systemctl reload wg-quick@*
 $USER ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/wireguard/*.conf
+$USER ALL=(ALL) NOPASSWD: /bin/cat /etc/wireguard/*.conf
+$USER ALL=(ALL) NOPASSWD: /bin/chmod * /etc/wireguard/*.conf
 EOF
 
 chmod 440 /etc/sudoers.d/orchenet
