@@ -1,63 +1,34 @@
 #!/bin/bash
-###############################################################################
-# Quick deployment script for updating running OrcheNet installation
-# Run this after pulling new changes from git
-###############################################################################
+# Quick deployment script for OrcheNet updates
+# Run this on the server after pushing changes to git
 
 set -e
 
-INSTALL_DIR="/opt/orchenet"
-
-echo "=========================================="
-echo "OrcheNet Update Deployment"
-echo "=========================================="
+echo "===== OrcheNet Update Deployment ====="
 echo ""
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then
-    echo "Error: This script must be run as root"
-    exit 1
-fi
+# Pull latest changes
+echo "Pulling latest changes from git..."
+git pull
 
-echo "Step 1: Updating Python dependencies..."
-cd $INSTALL_DIR
-source venv/bin/activate
-pip install -r backend/requirements.txt
-echo "✓ Python dependencies updated"
+# Rebuild frontend
+echo "Building frontend..."
+cd frontend
+npm run build
+cd ..
+
+# Restart backend service
+echo "Restarting backend service..."
+sudo systemctl restart orchenet-backend
+
+# Wait a moment for service to start
+sleep 3
+
+# Check service status
 echo ""
-
-echo "Step 2: Rebuilding frontend..."
-cd $INSTALL_DIR/frontend
-sudo -u orchenet npm install
-sudo -u orchenet npm run build
-echo "✓ Frontend rebuilt"
-echo ""
-
-echo "Step 3: Restarting services..."
-systemctl restart orchenet-backend
-systemctl restart nginx
-echo "✓ Services restarted"
-echo ""
-
-echo "Step 4: Checking service status..."
-sleep 2
-if systemctl is-active --quiet orchenet-backend; then
-    echo "✓ Backend is running"
-else
-    echo "✗ Backend failed to start"
-    journalctl -u orchenet-backend -n 20 --no-pager
-fi
-
-if systemctl is-active --quiet nginx; then
-    echo "✓ Nginx is running"
-else
-    echo "✗ Nginx failed to start"
-fi
+echo "Service status:"
+sudo systemctl status orchenet-backend --no-pager | grep Active
 
 echo ""
-echo "=========================================="
-echo "Update deployment complete!"
-echo "=========================================="
-echo ""
-echo "Clear your browser cache and refresh the page to see changes"
-echo ""
+echo "===== Update Complete ====="
+echo "Check logs with: journalctl -u orchenet-backend -f"
