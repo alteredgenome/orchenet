@@ -150,8 +150,21 @@ echo -e "${GREEN}✓ Frontend built${NC}"
 
 # Initialize database
 echo -e "${YELLOW}Step 9: Initializing database...${NC}"
+
+# Ensure data directory has proper permissions for orchenet user
+chown $USER:$GROUP "$INSTALL_DIR/data"
+chmod 775 "$INSTALL_DIR/data"
+
 cd "$INSTALL_DIR/backend"
 sudo -u $USER $VENV_DIR/bin/python init_db.py
+
+# Set proper permissions on database file (if created)
+if [ -f "$INSTALL_DIR/data/orchenet.db" ]; then
+    chown $USER:$GROUP "$INSTALL_DIR/data/orchenet.db"
+    chmod 664 "$INSTALL_DIR/data/orchenet.db"
+    echo -e "${GREEN}✓ Database permissions set${NC}"
+fi
+
 echo -e "${GREEN}✓ Database initialized${NC}"
 
 # Setup WireGuard server
