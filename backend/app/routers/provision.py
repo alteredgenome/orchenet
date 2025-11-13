@@ -211,17 +211,17 @@ def generate_mikrotik_provisioning_script(
 # 10. Test WireGuard Connection
 :put "Step 10: Testing WireGuard connection..."
 :delay 3s
-:if ([/interface get [find name=$tunnelName] running]) do={{
+:if ([/interface get [find name=$tunnelName] running]) do={{{{
     :put "  ✓ WireGuard interface '$tunnelName' is UP"
-    :do {{
+    :do {{{{
         /ping 10.99.0.1 count=3
         :put "  ✓ Ping to OrcheNet server successful"
-    }} on-error={{
+    }}}} on-error={{{{
         :put "  ⚠ WARNING: Ping to OrcheNet server failed (check firewall/routing)"
-    }}
-}} else={{
+    }}}}
+}}}} else={{{{
     :put "  ⚠ WARNING: WireGuard interface is DOWN"
-}}
+}}}}
 
 # 11. Run initial check-in
 :put "Step 11: Performing initial check-in..."
