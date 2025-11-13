@@ -83,7 +83,7 @@ def generate_mikrotik_provisioning_script(
 :local orchenetServerPublicKey "{server_public_key}"
 :local devicePrivateKey "{device_private_key}"
 :local deviceVpnIp "{device_vpn_ip}/32"
-:local apiUrl "{api_url}/api/checkin"
+:local apiUrl "{api_url}/api/checkin/"
 :local tunnelName "{tunnel_name}"
 :local sshUser "orchenet"
 :local sshPassword "CHANGE_ME_IMMEDIATELY"
