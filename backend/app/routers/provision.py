@@ -173,7 +173,7 @@ def generate_mikrotik_provisioning_script(
 :local deviceName [/system identity get name]\\n\\
 :local macAddress \\"{mac_address}\\"\\n\\
 :local serialNumber [/system routerboard get serial-number]\\n\\
-:local firmwareVersion [/system package get system version]\\n\\
+:local firmwareVersion [/system resource get version]\\n\\
 :local uptimeSeconds [/system resource get uptime]\\n\\
 :local cpuLoad [/system resource get cpu-load]\\n\\
 :local freeMemory [/system resource get free-memory]\\n\\
